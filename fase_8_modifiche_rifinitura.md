@@ -49,3 +49,32 @@ qui quando le fasi 0-7 sono stabili:
 
 *(Claude Code aggiunge qui le nuove voci man mano che emergono durante le fasi 0-7,
 seguendo il formato sopra)*
+
+### [Fase 0] Hosting: stesso VPS di Squadfy o VPS dedicato
+- Contesto: la fase 0 richiede di scegliere se ospitare MKRemote sullo stesso VPS
+  Hetzner già usato per Squadfy oppure su un VPS dedicato separato.
+- Opzioni valutate:
+  - VPS dedicato: isolamento completo, firewall/subnet VPN dedicati, nessun rischio
+    di impatto su Squadfy, ma costo aggiuntivo e setup infrastrutturale da rifare.
+  - Stesso VPS di Squadfy: nessun costo aggiuntivo, infrastruttura (Postgres/Redis/
+    Nginx) già presente, ma rischio di impatto reciproco tra i due progetti e
+    perimetro di sicurezza condiviso (rilevante qui perché il progetto gestisce
+    accesso privilegiato a router in produzione).
+- Scelta di default adottata: nessuna, esplicitamente rimandata dall'utente.
+  Procediamo con lo scaffolding locale del progetto Django, che non dipende da
+  questa scelta; la decisione infrastrutturale va presa prima di eseguire i task
+  di setup server (punto 2 di fase_0_fondamenta.md).
+- Stato: da decidere
+
+### [Fase 0] Verifica end-to-end locale (Postgres/Redis/Celery) rimandata
+- Contesto: Postgres e Redis non sono installati sul Mac di sviluppo. L'utente ha
+  scelto di non installarli localmente (né nativamente né via Docker) e di
+  rimandare il test end-to-end direttamente al VPS.
+- Scelta di default adottata: lo scaffolding del progetto (settings, app, Celery,
+  requirements) è stato completato e validato solo staticamente (`manage.py check`,
+  import di `mkremote.celery` e autodiscovery del task di prova
+  `monitoring.tasks.ping_task`). La connessione reale a Postgres/Redis, le
+  migrazioni, la creazione del superuser e l'esecuzione effettiva di Celery
+  worker+beat vanno verificate quando sarà disponibile il VPS (o un ambiente con
+  Postgres/Redis attivi).
+- Stato: rimandato

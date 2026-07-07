@@ -31,13 +31,24 @@ Questo file non è una fase di sviluppo: è il protocollo che regola come tutte 
 5. **Non passare alla fase successiva** finché quella attuale non è `_terminato`, a meno che
    l'utente non chieda esplicitamente di procedere in parallelo.
 
+6. **Se durante l'esecuzione alcune operazioni della fase vengono rimandate** (es. richiedono
+   accesso a risorse non disponibili ora, come il VPS, o sono state esplicitamente rimandate
+   dall'utente) e per questo la fase non può essere chiusa come `_terminato`, aggiungi anche il
+   suffisso `_da_finire` al nome del file (mantenendo `_esecuzione`), per segnalare che il
+   lavoro fatto finora non è completo e restano operazioni in sospeso.
+   Esempio: `fase_0_fondamenta_esecuzione.md` → `fase_0_fondamenta_esecuzione_da_finire.md`
+   Le operazioni rimandate vanno comunque annotate in `fase_8_modifiche_rifinitura.md` come da
+   regola 3. Quando le operazioni in sospeso vengono completate, rimuovi `_esecuzione_da_finire`
+   e applica la regola 4 (`_terminato`).
+
 ## Convenzione nomi file riassunta
 
-| Stato              | Nome file                              |
-|--------------------|-----------------------------------------|
-| Da iniziare        | `fase_N_nome.md`                        |
-| In corso           | `fase_N_nome_esecuzione.md`             |
-| Completata         | `fase_N_nome_terminato.md`              |
+| Stato                          | Nome file                                    |
+|--------------------------------|-----------------------------------------------|
+| Da iniziare                    | `fase_N_nome.md`                              |
+| In corso                       | `fase_N_nome_esecuzione.md`                   |
+| In corso con operazioni rimandate | `fase_N_nome_esecuzione_da_finire.md`      |
+| Completata                     | `fase_N_nome_terminato.md`                    |
 
 ## Ordine delle fasi
 
