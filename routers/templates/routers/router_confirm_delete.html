@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Elimina {{ object.nome }} — MKRemote{% endblock %}
+{% block content %}
+<h1>Eliminare "{{ object.nome }}"?</h1>
+<p>L'operazione è definitiva e rimuoverà anche le credenziali salvate per questo router.</p>
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Conferma eliminazione</button>
+    <a class="btn" href="{% url 'router-detail' object.pk %}">Annulla</a>
+</form>
+{% endblock %}

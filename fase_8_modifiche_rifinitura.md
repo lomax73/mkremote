@@ -78,3 +78,23 @@ seguendo il formato sopra)*
   worker+beat vanno verificate quando sarà disponibile il VPS (o un ambiente con
   Postgres/Redis attivi).
 - Stato: rimandato
+
+### [Fase 1] django-cryptography incompatibile con Django 5.2, sostituito con Fernet diretto
+- Contesto: `django-cryptography` 1.1 (l'unica versione disponibile) importa
+  `django.utils.baseconv`, rimosso in Django 5.2. Il pacchetto non è più
+  mantenuto e non ha una versione compatibile.
+- Opzioni valutate:
+  - Fissare Django a una versione <5.2 pur di usare django-cryptography: scarterebbe
+    funzionalità/fix più recenti e comunque lega il progetto a una libreria non
+    mantenuta.
+  - Implementare un campo custom (`routers.fields.EncryptedCharField`) basato
+    direttamente su `cryptography.fernet.Fernet`: nessuna dipendenza aggiuntiva
+    oltre `cryptography` (già transitiva), piena compatibilità con Django 5.2,
+    logica di cifratura sotto il nostro controllo diretto.
+- Scelta di default adottata: implementato il campo custom con Fernet. La chiave
+  master (`MASTER_ENCRYPTION_KEY` in `.env`) deve ora essere generata con
+  `Fernet.generate_key()` (documentato in `.env.example`), non più con
+  `secrets.token_urlsafe`. Verificato con test isolato (SQLite in-memory) che
+  cifratura/decrittazione e round-trip su `username`/`password` funzionano
+  correttamente.
+- Stato: risolto

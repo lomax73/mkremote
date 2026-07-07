@@ -35,10 +35,10 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 
 ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h]
 
-# Chiave master per la cifratura simmetrica delle credenziali router (Fase 1).
+# Chiave master Fernet per la cifratura simmetrica delle credenziali router (Fase 1).
 # Mai in chiaro nel codice: deve arrivare da env. Generarla con:
-#   python -c "import secrets; print(secrets.token_urlsafe(32))"
-CRYPTOGRAPHY_KEY = os.environ.get('MASTER_ENCRYPTION_KEY')
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+MASTER_ENCRYPTION_KEY = os.environ.get('MASTER_ENCRYPTION_KEY')
 
 # Pianificazione subnet VPN WireGuard hub-and-spoke (vedi Fase 0 / Fase 2).
 # Configurabile da env, mai hardcoded altrove nel codice.
@@ -81,7 +81,7 @@ ROOT_URLCONF = 'mkremote.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,6 +120,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'router-list'
+LOGOUT_REDIRECT_URL = 'login'
 
 
 # Password validation

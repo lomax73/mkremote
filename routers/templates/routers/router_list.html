@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Router — MKRemote{% endblock %}
+{% block content %}
+<h1>Router</h1>
+<p><a class="btn" href="{% url 'router-create' %}">+ Nuovo router</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Location</th>
+            <th>IP VPN</th>
+            <th>Stato</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for router in routers %}
+        <tr>
+            <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
+            <td>{{ router.location }}</td>
+            <td>{{ router.ip_vpn|default:"—" }}</td>
+            <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Nessun router registrato.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

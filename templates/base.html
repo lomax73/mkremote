@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}MKRemote{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 960px; color: #1a1a1a; }
+        nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 1rem; }
+        nav a { text-decoration: none; color: #1a1a1a; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; color: #fff; }
+        .badge-non_configurato { background: #9ca3af; }
+        .badge-in_attesa_vpn { background: #f59e0b; }
+        .badge-connesso { background: #22c55e; }
+        .badge-offline { background: #ef4444; }
+        .btn { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 6px; background: #1a1a1a; color: #fff; text-decoration: none; border: none; cursor: pointer; font-size: 0.95rem; }
+        .btn-danger { background: #ef4444; }
+        form p { margin: 0.6rem 0; }
+        label { display: block; font-weight: 600; margin-bottom: 0.2rem; }
+        input, textarea { width: 100%; padding: 0.4rem; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="{% url 'router-list' %}">MKRemote</a>
+    {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn" type="submit">Logout ({{ user.username }})</button>
+        </form>
+    {% endif %}
+</nav>
+{% block content %}{% endblock %}
+</body>
+</html>

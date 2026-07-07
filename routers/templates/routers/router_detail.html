@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ router.nome }} — MKRemote{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-list' %}">&larr; Router</a></p>
+<h1>{{ router.nome }}
+    <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
+</h1>
+
+<table>
+    <tr><th>Location</th><td>{{ router.location|default:"—" }}</td></tr>
+    <tr><th>Note</th><td>{{ router.note|linebreaksbr|default:"—" }}</td></tr>
+    <tr><th>Modello hardware</th><td>{{ router.modello_hardware|default:"—" }}</td></tr>
+    <tr><th>Versione RouterOS</th><td>{{ router.versione_routeros|default:"—" }}</td></tr>
+    <tr><th>IP pubblico / DDNS</th><td>{{ router.ip_pubblico_o_ddns }}</td></tr>
+    <tr><th>Porta SSH</th><td>{{ router.porta_ssh }}</td></tr>
+    <tr><th>Porta API</th><td>{{ router.porta_api }}</td></tr>
+    <tr><th>Username</th><td>{{ router.username }}</td></tr>
+    <tr><th>Password</th><td>••••••••</td></tr>
+    <tr><th>IP VPN</th><td>{{ router.ip_vpn|default:"—" }}</td></tr>
+    <tr><th>Chiave pubblica WireGuard</th><td>{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
+    <tr><th>Intervallo backup</th><td>{{ router.intervallo_backup|default:"—" }}</td></tr>
+    <tr><th>Accesso pubblico bloccato</th><td>{{ router.accesso_pubblico_bloccato|yesno:"Sì,No" }}</td></tr>
+    <tr><th>Creato il</th><td>{{ router.creato_il }}</td></tr>
+    <tr><th>Modificato il</th><td>{{ router.modificato_il }}</td></tr>
+</table>
+
+<p>
+    <a class="btn" href="{% url 'router-update' router.pk %}">Modifica</a>
+    <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
+</p>
+{% endblock %}

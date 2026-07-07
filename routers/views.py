@@ -1,3 +1,40 @@
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-# Create your views here.
+from .forms import RouterForm
+from .models import Router
+
+
+class RouterListView(LoginRequiredMixin, ListView):
+    model = Router
+    template_name = 'routers/router_list.html'
+    context_object_name = 'routers'
+
+
+class RouterDetailView(LoginRequiredMixin, DetailView):
+    model = Router
+    template_name = 'routers/router_detail.html'
+    context_object_name = 'router'
+
+
+class RouterCreateView(LoginRequiredMixin, CreateView):
+    model = Router
+    form_class = RouterForm
+    template_name = 'routers/router_form.html'
+    success_url = reverse_lazy('router-list')
+
+
+class RouterUpdateView(LoginRequiredMixin, UpdateView):
+    model = Router
+    form_class = RouterForm
+    template_name = 'routers/router_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('router-detail', kwargs={'pk': self.object.pk})
+
+
+class RouterDeleteView(LoginRequiredMixin, DeleteView):
+    model = Router
+    template_name = 'routers/router_confirm_delete.html'
+    success_url = reverse_lazy('router-list')

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifica {{ object.nome }}{% else %}Nuovo router{% endif %} — MKRemote{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-list' %}">&larr; Router</a></p>
+<h1>{% if object %}Modifica {{ object.nome }}{% else %}Nuovo router{% endif %}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn" type="submit">Salva</button>
+</form>
+{% endblock %}
