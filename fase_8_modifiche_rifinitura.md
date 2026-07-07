@@ -117,3 +117,37 @@ seguendo il formato sopra)*
   router non rompa il primo, verificare "Test connessione" con un router vero
   raggiungibile in VPN.
 - Stato: rimandato
+
+### [Fase 4] Saltata la Fase 3, prerequisiti formali non soddisfatti
+- Contesto: l'utente ha chiesto esplicitamente di procedere con la Fase 4 senza
+  aver affrontato la Fase 3 (blocco accesso pubblico) e senza che Fase 1/Fase 2
+  siano "terminate" (sono entrambe `_da_finire` per il blocco VPS).
+- Scelta di default adottata: proceduto come richiesto (fase_-1 regola 5 lo
+  consente su richiesta esplicita). Il task di backup usa comunque solo
+  `router.ip_vpn` per contattare il router (mai l'IP pubblico), come prescritto
+  dalla nota della Fase 3, anche se il blocco firewall vero e proprio non è
+  stato applicato.
+- Stato: risolto (nel senso che non blocca — resta comunque da fare la Fase 3
+  quando si vorrà davvero irrigidire la sicurezza)
+
+### [Fase 4] Retention: scelta "ultimi N backup" invece di "ultimi X giorni"
+- Contesto: la fase permette due criteri di retention alternativi validi.
+- Scelta di default adottata: implementato solo `backup_retention_count`
+  (ultimi N backup riusciti, per tipo binario/export separatamente), non anche
+  una soglia a giorni, per non introdurre due meccanismi paralleli senza una
+  richiesta esplicita.
+- Stato: risolto (si può aggiungere in seguito un criterio a giorni se serve)
+
+### [Fase 4] Object Storage non configurato, upload/retention S3 non testati con credenziali reali
+- Contesto: l'utente ha scelto di procedere con placeholder `.env` vuoti per
+  Hetzner Object Storage invece di fornire le credenziali reali subito.
+- Scelta di default adottata: implementato il client S3 (boto3) dietro
+  `ObjectStorageNotConfigured`, che fa fallire il backup con un errore
+  registrato in `Backup.errore` invece di un falso successo. Verificato con
+  test isolati (SQLite in-memory + Celery eager) che: la sincronizzazione del
+  `PeriodicTask` su `intervallo_backup` funziona, il task di backup fallisce
+  gestendo l'eccezione senza crashare quando il router non è raggiungibile, e
+  la pulizia per retention rimuove correttamente i backup più vecchi oltre la
+  soglia. Non verificato: upload/delete reali su Hetzner Object Storage (serve
+  credenziali reali) e l'intero flusso con un router Mikrotik reale in VPN.
+- Stato: rimandato

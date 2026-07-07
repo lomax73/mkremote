@@ -19,6 +19,21 @@
     <tr><th>IP VPN</th><td>{{ router.ip_vpn|default:"—" }}</td></tr>
     <tr><th>Chiave pubblica WireGuard</th><td>{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
     <tr><th>Intervallo backup</th><td>{{ router.intervallo_backup|default:"—" }}</td></tr>
+    <tr>
+        <th>Ultimo backup</th>
+        <td>
+            {% if ultimo_backup %}
+                {{ ultimo_backup.creato_il }} —
+                {% if ultimo_backup.esito == 'riuscito' %}
+                    <span class="badge badge-connesso">Riuscito</span>
+                {% else %}
+                    <span class="badge badge-offline" title="{{ ultimo_backup.errore }}">Fallito</span>
+                {% endif %}
+            {% else %}
+                — nessun backup ancora eseguito
+            {% endif %}
+        </td>
+    </tr>
     <tr><th>Accesso pubblico bloccato</th><td>{{ router.accesso_pubblico_bloccato|yesno:"Sì,No" }}</td></tr>
     <tr><th>Creato il</th><td>{{ router.creato_il }}</td></tr>
     <tr><th>Modificato il</th><td>{{ router.modificato_il }}</td></tr>
@@ -27,6 +42,7 @@
 <p>
     <a class="btn" href="{% url 'router-update' router.pk %}">Modifica</a>
     <a class="btn" href="{% url 'vpn-generate-script' router.pk %}">Genera script VPN</a>
+    <a class="btn" href="{% url 'backup-list' router.pk %}">Backup</a>
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
 {% endblock %}

@@ -43,6 +43,10 @@ class Router(models.Model):
         blank=True,
         help_text='Intervallo tra un backup automatico e il successivo (usato dalla Fase 4).',
     )
+    backup_retention_count = models.PositiveIntegerField(
+        default=10,
+        help_text='Numero di backup più recenti da conservare per questo router; i più vecchi vengono eliminati.',
+    )
 
     accesso_pubblico_bloccato = models.BooleanField(default=False)
 

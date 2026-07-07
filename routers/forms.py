@@ -21,7 +21,7 @@ class RouterForm(forms.ModelForm):
             'modello_hardware', 'versione_routeros',
             'ip_pubblico_o_ddns', 'porta_ssh', 'porta_api',
             'username',
-            'intervallo_backup',
+            'intervallo_backup', 'backup_retention_count',
         ]
 
     def __init__(self, *args, **kwargs):

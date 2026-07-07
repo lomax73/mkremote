@@ -62,6 +62,14 @@ VPS_SSH_PRIVATE_KEY_PATH = os.environ.get('VPS_SSH_PRIVATE_KEY_PATH', '')
 VPN_WG_INTERFACE = os.environ.get('VPN_WG_INTERFACE', 'wg0')
 VPN_WG_CONF_PATH = os.environ.get('VPN_WG_CONF_PATH', '/etc/wireguard/wg0.conf')
 
+# Hetzner Object Storage (S3-compatibile) per i backup router (Fase 4).
+# Non ancora provisionato: valori vuoti finché non arrivano le credenziali reali.
+BACKUP_S3_ENDPOINT_URL = os.environ.get('BACKUP_S3_ENDPOINT_URL', '')
+BACKUP_S3_ACCESS_KEY = os.environ.get('BACKUP_S3_ACCESS_KEY', '')
+BACKUP_S3_SECRET_KEY = os.environ.get('BACKUP_S3_SECRET_KEY', '')
+BACKUP_S3_BUCKET_NAME = os.environ.get('BACKUP_S3_BUCKET_NAME', '')
+BACKUP_S3_PREFIX = os.environ.get('BACKUP_S3_PREFIX', 'mikrotik-backups')
+
 
 # Application definition
 

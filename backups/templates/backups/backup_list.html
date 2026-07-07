@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Backup — {{ router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-detail' router.pk %}">&larr; {{ router.nome }}</a></p>
+<h1>Backup — {{ router.nome }}</h1>
+
+<form method="post" action="{% url 'backup-now' router.pk %}">
+    {% csrf_token %}
+    <button class="btn" type="submit">Backup manuale ora</button>
+</form>
+
+<table style="margin-top:1rem;">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Esito</th>
+            <th>Dimensione</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for backup in backups %}
+        <tr>
+            <td>{{ backup.creato_il }}</td>
+            <td>{{ backup.get_tipo_display }}</td>
+            <td>
+                {% if backup.esito == 'riuscito' %}
+                    <span class="badge badge-connesso">Riuscito</span>
+                {% else %}
+                    <span class="badge badge-offline" title="{{ backup.errore }}">Fallito</span>
+                {% endif %}
+            </td>
+            <td>{{ backup.dimensione_bytes|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Nessun backup ancora eseguito.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -17,6 +17,12 @@ class RouterDetailView(LoginRequiredMixin, DetailView):
     template_name = 'routers/router_detail.html'
     context_object_name = 'router'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from backups.models import Backup
+        context['ultimo_backup'] = Backup.objects.filter(router=self.object).first()
+        return context
+
 
 class RouterCreateView(LoginRequiredMixin, CreateView):
     model = Router
