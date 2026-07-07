@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Script VPN — {{ router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-detail' router.pk %}">&larr; {{ router.nome }}</a></p>
+<h1>Script WireGuard per "{{ router.nome }}"</h1>
+<p>Copia e incolla questo script in un terminale RouterOS (WinBox o SSH) del router.
+   Tieni aperta una sessione WinBox/SSH separata come rete di sicurezza.</p>
+<pre style="background:#111827; color:#e5e7eb; padding:1rem; border-radius:8px; overflow-x:auto;"><code>{{ script }}</code></pre>
+
+<h2>Dopo l'esecuzione</h2>
+<p>Lo script stampa la chiave pubblica generata sul router. Incollala qui sotto:</p>
+<form method="post" action="{% url 'vpn-save-public-key' router.pk %}">
+    {% csrf_token %}
+    <p>
+        <label for="chiave_pubblica_wireguard">Chiave pubblica router</label>
+        <input type="text" name="chiave_pubblica_wireguard" id="chiave_pubblica_wireguard"
+               value="{{ router.chiave_pubblica_wireguard }}" placeholder="es. AbCdEf...==">
+    </p>
+    <button class="btn" type="submit">Salva chiave</button>
+</form>
+
+<form method="post" action="{% url 'vpn-register-peer' router.pk %}" style="margin-top:1rem;">
+    {% csrf_token %}
+    <button class="btn" type="submit">Registra peer sul server</button>
+</form>
+
+<form method="post" action="{% url 'vpn-test-connection' router.pk %}" style="margin-top:1rem;">
+    {% csrf_token %}
+    <button class="btn" type="submit">Test connessione</button>
+</form>
+{% endblock %}

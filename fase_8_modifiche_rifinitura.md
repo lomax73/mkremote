@@ -98,3 +98,22 @@ seguendo il formato sopra)*
   cifratura/decrittazione e round-trip su `username`/`password` funzionano
   correttamente.
 - Stato: risolto
+
+### [Fase 2] Verifica end-to-end reale rimandata al VPS (nessun hub WireGuard disponibile)
+- Contesto: la Fase 2 richiede un VPS con hub WireGuard (`wg0`) attivo e
+  raggiungibile via SSH (Fase 0, non ancora fatta). Senza VPS reale non è
+  possibile eseguire lo script su un router vero né registrare davvero un peer.
+- Scelta di default adottata: implementata tutta la logica applicativa
+  (assegnazione IP idempotente, generatore script `.rsc`, client SSH verso il
+  VPS con `wg set` + `wg showconf` + `wg syncconf` per evitare downtime, test
+  di connessione via API RouterOS) dietro configurazione esplicita in `.env`
+  (`VPN_HUB_PUBLIC_ENDPOINT`, `VPN_HUB_PUBLIC_KEY`, `VPS_SSH_HOST`, ecc.), tutta
+  vuota per ora. Se mancante, le viste falliscono con un messaggio chiaro invece
+  di dare un falso successo. Verificato l'intero flusso (comprese le due
+  modalità di fallimento: hub non configurato, VPS non raggiungibile) con
+  Django test client su SQLite in-memory.
+- Cosa resta da fare quando il VPS sarà pronto: valorizzare le variabili env,
+  testare lo script su un router Mikrotik reale, verificare che un secondo
+  router non rompa il primo, verificare "Test connessione" con un router vero
+  raggiungibile in VPN.
+- Stato: rimandato

@@ -48,6 +48,20 @@ VPN_PERSONAL_IP_RANGE_START = os.environ.get('VPN_PERSONAL_IP_RANGE_START', '10.
 VPN_PERSONAL_IP_RANGE_END = os.environ.get('VPN_PERSONAL_IP_RANGE_END', '10.10.0.9')
 VPN_ROUTER_IP_RANGE_START = os.environ.get('VPN_ROUTER_IP_RANGE_START', '10.10.0.10')
 
+# Hub WireGuard sul VPS (Fase 2). Il VPS non è ancora provisionato (vedi fase_8):
+# questi valori restano vuoti finché non esiste un hub reale da raggiungere.
+VPN_HUB_PUBLIC_ENDPOINT = os.environ.get('VPN_HUB_PUBLIC_ENDPOINT', '')  # es. vps.example.com
+VPN_HUB_PUBLIC_PORT = os.environ.get('VPN_HUB_PUBLIC_PORT', '51820')
+VPN_HUB_PUBLIC_KEY = os.environ.get('VPN_HUB_PUBLIC_KEY', '')  # chiave pubblica WireGuard del VPS
+
+# Accesso SSH al VPS per gestire i peer WireGuard (wg set / wg syncconf).
+VPS_SSH_HOST = os.environ.get('VPS_SSH_HOST', '')
+VPS_SSH_PORT = int(os.environ.get('VPS_SSH_PORT', '22'))
+VPS_SSH_USER = os.environ.get('VPS_SSH_USER', 'root')
+VPS_SSH_PRIVATE_KEY_PATH = os.environ.get('VPS_SSH_PRIVATE_KEY_PATH', '')
+VPN_WG_INTERFACE = os.environ.get('VPN_WG_INTERFACE', 'wg0')
+VPN_WG_CONF_PATH = os.environ.get('VPN_WG_CONF_PATH', '/etc/wireguard/wg0.conf')
+
 
 # Application definition
 

@@ -26,6 +26,7 @@
 
 <p>
     <a class="btn" href="{% url 'router-update' router.pk %}">Modifica</a>
+    <a class="btn" href="{% url 'vpn-generate-script' router.pk %}">Genera script VPN</a>
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
 {% endblock %}
