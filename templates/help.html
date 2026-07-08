@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Help — MKRemote{% endblock %}
+{% block content %}
+<div class="help-content">
+{{ guida_html|safe }}
+</div>
+<style>
+    .help-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .help-content th, .help-content td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); text-align: left; }
+    .help-content code { background: var(--azure-tint); padding: 0.1rem 0.35rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+    .help-content pre { background: #111827; color: #e5e7eb; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    .help-content pre code { background: none; padding: 0; color: inherit; }
+    .help-content hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    .help-content ul, .help-content ol { padding-left: 1.5rem; }
+</style>
+{% endblock %}

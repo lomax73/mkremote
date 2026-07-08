@@ -13,3 +13,4 @@ daphne>=4.1
 python-dotenv>=1.0
 requests>=2.31
 qrcode[pil]>=7.4
+markdown>=3.6
