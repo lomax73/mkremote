@@ -8,7 +8,7 @@ def create_poll_task(apps, schema_editor):
 
     schedule, _ = IntervalSchedule.objects.get_or_create(
         every=settings.MONITORING_POLL_INTERVAL_SECONDS,
-        period=IntervalSchedule.SECONDS,
+        period='seconds',  # IntervalSchedule.SECONDS non esiste sul modello storico/congelato
     )
     PeriodicTask.objects.get_or_create(
         name='monitoring-poll-routers',
