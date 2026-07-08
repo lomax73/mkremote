@@ -249,3 +249,24 @@ seguendo il formato sopra)*
   save` e `/export file=...`) prima di correggere il codice, poi ripulito i
   file di test dal router.
 - Stato: risolto
+
+### [Fase 4] Chiusura fase: mancava il download, verificato l'automatico reale
+- Contesto: verificando i criteri di completamento con router-lab reale, è
+  emerso che la vista storico backup non aveva mai avuto il link di download
+  richiesto esplicitamente da `fase_4_backup_automatici.md` — implementato
+  ora (`backups/storage.py:download_backup_file`, vista
+  `BackupDownloadView`), confermato funzionante dall'utente scaricando un
+  backup vero dal browser.
+- Verificato anche l'ultimo criterio rimasto aperto: backup **automatico**
+  all'intervallo configurato (finora testato solo manualmente). Impostato
+  temporaneamente `intervallo_backup=2 minuti` su router-lab, osservato nei
+  log di Celery worker che il task è partito da solo alle 14:37:42 (nessun
+  trigger manuale) ed è riuscito, poi ripristinato un intervallo di 24 ore.
+- Tutti i criteri di completamento della Fase 4 sono ora verificati con dati
+  reali: backup automatico, backup manuale, cifratura N/A qui (il file non è
+  cifrato lato app, solo in transito via FTPS — vedi nota sotto), retention
+  (verificata su SQLite in-memory in precedenza, logica invariata), download.
+- Nota per il futuro: i file di backup su Aruba non sono cifrati a riposo
+  (solo protetti da `.htaccess` + non pubblicati). Se in futuro serve difesa
+  in profondità, valutare cifratura lato applicazione prima dell'upload.
+- Stato: risolto — Fase 4 chiusa (`fase_4_backup_automatici_terminato.md`)
