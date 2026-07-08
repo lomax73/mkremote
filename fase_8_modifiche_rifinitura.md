@@ -122,13 +122,21 @@ seguendo il formato sopra)*
   `wg show wg0` e persistenza in `/etc/wireguard/wg0.conf`) passando
   attraverso una chiave SSH dedicata con forced-command ristretto (vedi
   `/usr/local/sbin/mkremote-wg-peer.sh` sul VPS), non root pieno.
-- Cosa resta da fare (richiede hardware reale, non ottenibile diversamente):
-  eseguire lo script `.rsc` generato su un router Mikrotik fisico/VM RouterOS
-  vero, verificare che il tunnel si stabilisca dal lato router, verificare
-  che un secondo router non rompa il collegamento del primo, verificare "Test
-  connessione" con un router vero raggiungibile in VPN.
-- Stato: parzialmente risolto (infrastruttura e integrazione VPS verificate;
-  resta solo il test con hardware Mikrotik reale)
+- Aggiornamento 2026-07-08 (2): testato con un Mikrotik fisico reale
+  ("router-lab", `10.0.0.122` sulla LAN dell'utente, non raggiungibile da
+  internet). Flusso completo end-to-end tramite l'app vera (non shell/test
+  isolato): script generato e incollato su WinBox dall'utente, chiave privata
+  generata sul router e mai trasmessa, chiave pubblica incollata nell'app,
+  peer registrato sul VPS, handshake WireGuard confermato (`wg show wg0` →
+  peer con handshake riuscito), "Test connessione" ha eseguito una chiamata
+  API RouterOS reale su `10.10.0.10:8728` e aggiornato `stato_connessione` a
+  `connesso`. Il router non ha bisogno di IP pubblico né porte inoltrate:
+  si collega in uscita al VPS, pattern standard hub-and-spoke.
+- Cosa resta da fare: verificare che un secondo router non rompa il
+  collegamento del primo (serve un secondo apparato Mikrotik).
+- Stato: risolto per i criteri raggiungibili con un solo router; il test
+  "secondo router non rompe il primo" resta aperto in attesa di hardware
+  aggiuntivo
 
 ### [Fase 4] Saltata la Fase 3, prerequisiti formali non soddisfatti
 - Contesto: l'utente ha chiesto esplicitamente di procedere con la Fase 4 senza
