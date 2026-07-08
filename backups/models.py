@@ -16,7 +16,7 @@ class Backup(models.Model):
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
     esito = models.CharField(max_length=20, choices=Esito.choices)
 
-    s3_key = models.CharField(max_length=500, blank=True)
+    storage_path = models.CharField(max_length=500, blank=True)
     dimensione_bytes = models.PositiveBigIntegerField(null=True, blank=True)
 
     errore = models.TextField(blank=True)

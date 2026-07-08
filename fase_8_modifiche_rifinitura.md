@@ -198,4 +198,39 @@ seguendo il formato sopra)*
   riferimento a "Hetzner" è hardcoded nel codice: i parametri (endpoint S3,
   IP/host VPS) sono tutti letti da `.env`, quindi il cambio provider non
   richiede modifiche al codice, solo ai valori di configurazione.
-- Stato: da decidere (Object Storage)
+- Aggiornamento 2026-07-08: risolto anche l'Object Storage, vedi voce
+  "[Fase 4] Storage backup: FTPS Aruba invece di Object Storage S3" più sotto.
+- Stato: risolto
+
+### [Fase 4] Storage backup: FTPS Aruba invece di Object Storage S3
+- Contesto: l'utente ha uno spazio FTP già disponibile su Aruba
+  (`ftp.fbosolution.it`) e ha chiesto di valutarlo al posto di un vero Object
+  Storage S3-compatibile (mai provisionato).
+- Opzioni valutate:
+  - FTP semplice: sconsigliato, protocollo in chiaro, i backup contengono
+    config router (potenzialmente dati sensibili) — avrebbe indebolito la
+    postura di sicurezza del progetto (VPN-only, credenziali cifrate, SSH
+    forced-command).
+  - FTPS (FTP con `AUTH TLS` esplicito, stessa porta 21): verificato che il
+    server Aruba lo supporta. Scelto perché cifra sia canale di controllo che
+    dati (`prot_p()`), usa `ftplib` della standard library (nessuna nuova
+    dipendenza), e lo spazio è già pagato/disponibile.
+  - SFTP vero (porta 22, su SSH): non disponibile su questo spazio hosting
+    condiviso Aruba (solo FTP/FTPS su porta 21).
+- Problema emerso e risolto: l'account FTP non permette di creare cartelle
+  nella root né nelle cartelle di backup automatico Aruba (sola lettura,
+  probabilmente mirror del sito). L'unica area scrivibile è
+  `www.fbosolution.it`, cioè la **webroot pubblica del sito aziendale** —
+  salvarci i backup senza protezione li avrebbe resi scaricabili da chiunque
+  via browser. Creata una sottocartella `mikrotik-backups/` con un
+  `.htaccess` (`Require all denied` + `Deny from all`, doppia sintassi per
+  compatibilità Apache 2.2/2.4) e **verificato con una richiesta HTTPS reale**
+  che risulta `403 Forbidden` prima di caricare alcun backup vero.
+- Implementazione: `backups/storage.py` riscritto con `ftplib.FTP_TLS` al
+  posto di `boto3`; rimossa la dipendenza `boto3` da `requirements.txt`;
+  campo modello `Backup.s3_key` rinominato in `storage_path` (migrazione di
+  rename, non drop+create, nessun dato perso); `.env` aggiornato con
+  `BACKUP_FTP_*` al posto di `BACKUP_S3_*`. Verificato upload+delete reali
+  tramite il codice dell'app (non solo `ftplib` grezzo) contro lo spazio
+  Aruba vero.
+- Stato: risolto

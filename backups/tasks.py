@@ -59,7 +59,7 @@ def _run_backup_one(router: Router, tipo: str) -> None:
             local_path = os.path.join(tmp_dir, remote_filename)
             asyncio.run(_download_and_remove(router, remote_filename, local_path))
             size = os.path.getsize(local_path)
-            s3_key = upload_backup_file(local_path, router.nome, remote_filename)
+            storage_path = upload_backup_file(local_path, router.nome, remote_filename)
     except ObjectStorageNotConfigured as exc:
         Backup.objects.create(router=router, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
     except Exception as exc:  # connessione router, SFTP, backup RouterOS falliti, ecc.
@@ -67,7 +67,7 @@ def _run_backup_one(router: Router, tipo: str) -> None:
     else:
         Backup.objects.create(
             router=router, tipo=tipo, esito=Backup.Esito.RIUSCITO,
-            s3_key=s3_key, dimensione_bytes=size,
+            storage_path=storage_path, dimensione_bytes=size,
         )
 
 
