@@ -30,3 +30,7 @@ def sync_periodic_backup_task(router) -> None:
             'enabled': True,
         },
     )
+
+
+def router_post_save(sender, instance, **kwargs):
+    sync_periodic_backup_task(instance)

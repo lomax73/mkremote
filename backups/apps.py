@@ -9,9 +9,13 @@ class BackupsConfig(AppConfig):
     def ready(self):
         from routers.models import Router
 
-        from .signals import sync_periodic_backup_task
+        from .signals import router_post_save
 
-        def _handler(sender, instance, **kwargs):
-            sync_periodic_backup_task(instance)
-
-        post_save.connect(_handler, sender=Router, dispatch_uid='backups_sync_periodic_task')
+        # weak=False: router_post_save è comunque un riferimento a livello di
+        # modulo (non raccolto dal GC), ma esplicito è meglio che affidarsi al
+        # comportamento di default — un bug analogo con una closure locale in
+        # questo stesso punto disconnetteva il segnale in silenzio.
+        post_save.connect(
+            router_post_save, sender=Router,
+            dispatch_uid='backups_sync_periodic_task', weak=False,
+        )
