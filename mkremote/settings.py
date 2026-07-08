@@ -75,6 +75,7 @@ BACKUP_FTP_BASE_PATH = os.environ.get('BACKUP_FTP_BASE_PATH', 'mikrotik-backups'
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -87,7 +88,10 @@ INSTALLED_APPS = [
     'backups',
     'monitoring',
     'accounts',
+    'terminal',
 ]
+
+ASGI_APPLICATION = 'mkremote.asgi.application'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -143,6 +147,17 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Channels (Fase 6: terminale SSH nel browser). DB Redis separato da Celery
+# (indice 1 invece di 0) per non mescolare i messaggi dei due sistemi.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.environ.get('CHANNELS_REDIS_URL', 'redis://localhost:6379/1')],
+        },
+    },
+}
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'router-list'
