@@ -25,6 +25,7 @@
 <div id="terminal-container" style="display:none; margin-top:1rem;">
     <div id="terminal" style="background:#000; padding:0.5rem; border-radius:8px;"></div>
     <p id="terminal-status" style="color:#64748b; font-size:0.85rem;"></p>
+    <button class="btn btn-danger" id="close-terminal-btn">Chiudi sessione</button>
 </div>
 
 <script>
@@ -75,6 +76,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
             }
+        });
+
+        document.getElementById('close-terminal-btn').addEventListener('click', function () {
+            socket.close();
+        });
+
+        // 'pagehide' cattura sia la navigazione via URL sia la chiusura scheda,
+        // anche quando la pagina finirebbe altrimenti nella bfcache del browser
+        // (che lascerebbe la connessione SSH aperta sul router senza che il
+        // server se ne accorga: la sessione risulterebbe orfana).
+        window.addEventListener('pagehide', function () {
+            socket.close();
         });
     });
 });
