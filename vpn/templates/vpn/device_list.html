@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}I miei dispositivi VPN — MKRemote{% endblock %}
+{% block content %}
+<h1>I miei dispositivi VPN</h1>
+<p>Ogni dispositivo (laptop, telefono) ha un proprio profilo WireGuard e raggiunge
+   l'hub e tutti i router già collegati con un solo tunnel.</p>
+
+<table>
+    <thead>
+        <tr><th>Nome</th><th>IP VPN</th><th>Stato</th><th>Creato il</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for device in dispositivi %}
+        <tr>
+            <td>{{ device.nome }}</td>
+            <td class="mono">{{ device.ip_vpn }}</td>
+            <td>
+                {% if device.attivo %}
+                <span class="badge badge-connesso">Attivo</span>
+                {% else %}
+                <span class="badge badge-offline">Revocato</span>
+                {% endif %}
+            </td>
+            <td>{{ device.creato_il }}</td>
+            <td>
+                {% if device.attivo %}
+                <form method="post" action="{% url 'vpn-device-revoke' device.pk %}"
+                      onsubmit="return confirm('Revocare l\'accesso di {{ device.nome }}? Non sarà più utilizzabile.');">
+                    {% csrf_token %}
+                    <button class="btn btn-danger" type="submit">Revoca</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Nessun dispositivo registrato.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2 style="margin-top:2rem;">Aggiungi dispositivo</h2>
+<form method="post" action="{% url 'vpn-device-add' %}">
+    {% csrf_token %}
+    <p>
+        <label for="nome">Nome dispositivo</label>
+        <input type="text" name="nome" id="nome" placeholder="es. iPhone di Fabrizio" required>
+    </p>
+    <button class="btn" type="submit">Genera profilo</button>
+</form>
+{% endblock %}

@@ -160,6 +160,7 @@
     <nav id="sidebar-nav">
         <a href="{% url 'router-list' %}">Router</a>
         <a href="{% url 'monitoring-dashboard' %}">Monitoraggio</a>
+        <a href="{% url 'vpn-device-list' %}">I miei dispositivi VPN</a>
     </nav>
     <div class="user-box">
         <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>

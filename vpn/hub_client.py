@@ -61,3 +61,36 @@ def register_peer_on_hub(peer_public_key: str, peer_vpn_ip: str) -> None:
     """
     _require_vps_config()
     asyncio.run(_register_peer(peer_public_key, peer_vpn_ip))
+
+
+async def _remove_peer(peer_public_key: str) -> None:
+    iface = settings.VPN_WG_INTERFACE
+    conf_path = settings.VPN_WG_CONF_PATH
+
+    remote_command = (
+        f"wg set {shlex.quote(iface)} peer {shlex.quote(peer_public_key)} remove && "
+        f"wg showconf {shlex.quote(iface)} > {shlex.quote(conf_path)} && "
+        f"wg syncconf {shlex.quote(iface)} {shlex.quote(conf_path)}"
+    )
+
+    async with asyncssh.connect(
+        settings.VPS_SSH_HOST,
+        port=settings.VPS_SSH_PORT,
+        username=settings.VPS_SSH_USER,
+        client_keys=[settings.VPS_SSH_PRIVATE_KEY_PATH],
+        known_hosts=None,
+    ) as conn:
+        result = await conn.run(remote_command, check=False)
+        if result.exit_status != 0:
+            raise VpsCommandFailed(
+                f'Comando fallito sul VPS (exit {result.exit_status}): {result.stderr}'
+            )
+
+
+def remove_peer_from_hub(peer_public_key: str) -> None:
+    """Rimuove un peer (revoca) dal VPS hub: usato per i dispositivi VPN
+    personali (Fase 7). Stessa chiave SSH a comando forzato usata per la
+    registrazione dei router; il wrapper sul VPS accetta anche la variante
+    'remove' dello stesso comando `wg set`."""
+    _require_vps_config()
+    asyncio.run(_remove_peer(peer_public_key))

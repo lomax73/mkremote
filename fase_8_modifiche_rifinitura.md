@@ -413,3 +413,28 @@ esplicita che con navigazione via).
 - Stato: chiusa. Rinominato
   `fase_5_monitoraggio_alert_esecuzione_da_finire.md` →
   `fase_5_monitoraggio_alert_terminato.md`.
+
+### [Fase 7] Scelta: chiave privata dei dispositivi personali generata lato server ma mai persistita
+- Contesto: la fase lasciava esplicitamente aperta la scelta tra generare la
+  coppia di chiavi WireGuard lato server (comodo: consente di produrre subito
+  un file .conf e un QR pronti da importare) o lato client (mai transita dal
+  server, ma richiede che l'utente sappia usare `wg genkey`/l'app per generare
+  la chiave e poi incollare la pubblica nell'app — scomodo soprattutto da
+  telefono).
+- Scelta adottata: generazione lato server (via `cryptography`
+  `X25519PrivateKey`, stesso algoritmo di `wg genkey`, verificato che produce
+  chiavi base64 da 44 caratteri nello stesso formato), ma la chiave privata
+  **non viene mai salvata su disco/DB**: viene tenuta in memoria solo per la
+  durata della singola richiesta HTTP che crea il dispositivo, usata per
+  generare il file .conf e il QR code (entrambi restituiti nella stessa
+  risposta, inline come data URI, senza una seconda richiesta al server), poi
+  scartata. Il modello `PersonalVpnDevice` salva solo la chiave pubblica
+  (non segreta, serve al VPS hub per riconoscere il peer) e l'IP VPN.
+- Conseguenza accettata: se l'utente perde il file/QR, non è recuperabile
+  (non è mai stato salvato) — va revocato il dispositivo e ricreato ex novo.
+  Stesso pattern usato da AWS per le chiavi SSH EC2 alla creazione.
+- Per la revoca è stato esteso `vpn/hub_client.py` con `remove_peer_from_hub`
+  e il wrapper a comando forzato sul VPS (`/usr/local/sbin/mkremote-wg-peer.sh`,
+  creato in Fase 2) con una seconda regex che accetta anche la variante
+  `wg set wg0 peer <chiave> remove && wg showconf ... && wg syncconf ...`.
+- Stato: implementato, verifica end-to-end in corso (vedi voce successiva).

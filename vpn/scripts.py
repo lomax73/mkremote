@@ -53,3 +53,29 @@ def generate_wireguard_setup_script(router) -> str:
 # nell'app e premi "Registra peer sul server".
 :put [/interface wireguard get [find name=wireguard1] public-key]
 """
+
+
+def generate_personal_client_conf(private_key: str, ip_vpn: str) -> str:
+    """Genera il file .conf per un dispositivo personale (Fase 7): laptop o
+    telefono, da importare nell'app WireGuard ufficiale (anche via QR code).
+
+    AllowedIPs è l'intera subnet VPN (non solo l'IP del peer): così il
+    dispositivo raggiunge sia l'hub sia tutti i router già collegati con un
+    solo profilo, senza dover elencare ogni router singolarmente."""
+    if not settings.VPN_HUB_PUBLIC_ENDPOINT or not settings.VPN_HUB_PUBLIC_KEY:
+        raise VpnHubNotConfigured(
+            'Il VPS hub non è ancora configurato (VPN_HUB_PUBLIC_ENDPOINT / '
+            'VPN_HUB_PUBLIC_KEY mancanti in .env). Vedi fase_8 per lo stato.'
+        )
+
+    return f"""\
+[Interface]
+PrivateKey = {private_key}
+Address = {ip_vpn}/32
+
+[Peer]
+PublicKey = {settings.VPN_HUB_PUBLIC_KEY}
+Endpoint = {settings.VPN_HUB_PUBLIC_ENDPOINT}:{settings.VPN_HUB_PUBLIC_PORT}
+AllowedIPs = {settings.VPN_SUBNET_CIDR}
+PersistentKeepalive = 25
+"""

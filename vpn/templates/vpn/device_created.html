@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Dispositivo creato — {{ device.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'vpn-device-list' %}">&larr; I miei dispositivi VPN</a></p>
+<h1>Dispositivo "{{ device.nome }}" creato</h1>
+
+<div id="warning-box">
+    <p>
+        <strong>Questa è l'unica volta in cui la chiave privata viene mostrata</strong>:
+        non viene salvata sul server. Scarica il file o inquadra il QR ora con
+        l'app WireGuard ufficiale; se lo perdi dovrai revocare questo dispositivo
+        e crearne uno nuovo.
+    </p>
+</div>
+
+<h2>QR code (app WireGuard mobile)</h2>
+<img src="data:image/png;base64,{{ qr_base64 }}" alt="QR code configurazione WireGuard" style="max-width:280px;">
+
+<h2>File .conf (desktop)</h2>
+<p>
+    <a class="btn" download="mkremote-{{ device.nome|slugify }}.conf"
+       href="data:text/plain;charset=utf-8;base64,{{ conf_base64 }}">Scarica wg-quick.conf</a>
+</p>
+
+<pre style="background:#111827; color:#e5e7eb; padding:1rem; border-radius:8px; overflow-x:auto;"><code>{{ conf }}</code></pre>
+{% endblock %}
