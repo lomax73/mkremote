@@ -25,11 +25,13 @@
             <td>
                 {% if device.attivo %}
                 <form method="post" action="{% url 'vpn-device-revoke' device.pk %}"
-                      onsubmit="return confirm('Revocare l\'accesso di {{ device.nome }}? Non sarà più utilizzabile.');">
+                      onsubmit="return confirm('Revocare l\'accesso di {{ device.nome }}? Non sarà più utilizzabile.');"
+                      style="display:inline;">
                     {% csrf_token %}
                     <button class="btn btn-danger" type="submit">Revoca</button>
                 </form>
                 {% endif %}
+                <a class="btn btn-danger" href="{% url 'vpn-device-delete' device.pk %}">Elimina</a>
             </td>
         </tr>
         {% empty %}

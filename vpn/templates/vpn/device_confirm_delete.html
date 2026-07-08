@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Elimina {{ device.nome }} — MKRemote{% endblock %}
+{% block content %}
+<p><a href="{% url 'vpn-device-list' %}">&larr; I miei dispositivi VPN</a></p>
+<h1>Eliminare "{{ device.nome }}"?</h1>
+<p>
+    {% if device.attivo %}
+    Il dispositivo è ancora attivo: l'eliminazione lo revoca prima sul VPS
+    (rimuove il peer) e poi cancella il record. Il profilo già importato sul
+    dispositivo smetterà di funzionare.
+    {% else %}
+    Il dispositivo è già stato revocato: questa operazione rimuove solo il
+    record dall'elenco.
+    {% endif %}
+</p>
+<form method="post">
+    {% csrf_token %}
+    <p>
+        <label for="conferma">Scrivi <strong>elimina</strong> per confermare</label>
+        <input type="text" id="conferma" autocomplete="off" placeholder="elimina">
+    </p>
+    <button class="btn btn-danger" type="submit" id="btn-conferma" disabled>Conferma eliminazione</button>
+    <a class="btn" href="{% url 'vpn-device-list' %}">Annulla</a>
+</form>
+<script>
+document.getElementById('conferma').addEventListener('input', function (e) {
+    document.getElementById('btn-conferma').disabled = e.target.value.trim().toLowerCase() !== 'elimina';
+});
+</script>
+{% endblock %}

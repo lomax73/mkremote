@@ -125,3 +125,22 @@ class RevokePersonalDeviceView(LoginRequiredMixin, View):
             device.save(update_fields=['revocato_il'])
             messages.success(request, f'Dispositivo "{device.nome}" revocato: accesso disattivato.')
         return redirect('vpn-device-list')
+
+
+class DeletePersonalDeviceView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        device = get_object_or_404(PersonalVpnDevice, pk=pk, utente=request.user)
+        return render(request, 'vpn/device_confirm_delete.html', {'device': device})
+
+    def post(self, request, pk):
+        device = get_object_or_404(PersonalVpnDevice, pk=pk, utente=request.user)
+        if device.attivo:
+            try:
+                remove_peer_from_hub(device.chiave_pubblica)
+            except (VpsNotConfigured, VpsCommandFailed) as exc:
+                messages.error(request, f'Eliminazione fallita: {exc}')
+                return redirect('vpn-device-list')
+        nome = device.nome
+        device.delete()
+        messages.success(request, f'Dispositivo "{nome}" eliminato.')
+        return redirect('vpn-device-list')

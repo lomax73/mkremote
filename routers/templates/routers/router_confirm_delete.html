@@ -2,10 +2,20 @@
 {% block title %}Elimina {{ object.nome }} — MKRemote{% endblock %}
 {% block content %}
 <h1>Eliminare "{{ object.nome }}"?</h1>
-<p>L'operazione è definitiva e rimuoverà anche le credenziali salvate per questo router.</p>
+<p>L'operazione è definitiva e rimuoverà anche le credenziali, i backup e le
+   metriche salvate per questo router.</p>
 <form method="post">
     {% csrf_token %}
-    <button class="btn btn-danger" type="submit">Conferma eliminazione</button>
+    <p>
+        <label for="conferma">Scrivi <strong>elimina</strong> per confermare</label>
+        <input type="text" id="conferma" autocomplete="off" placeholder="elimina">
+    </p>
+    <button class="btn btn-danger" type="submit" id="btn-conferma" disabled>Conferma eliminazione</button>
     <a class="btn" href="{% url 'router-detail' object.pk %}">Annulla</a>
 </form>
+<script>
+document.getElementById('conferma').addEventListener('input', function (e) {
+    document.getElementById('btn-conferma').disabled = e.target.value.trim().toLowerCase() !== 'elimina';
+});
+</script>
 {% endblock %}
