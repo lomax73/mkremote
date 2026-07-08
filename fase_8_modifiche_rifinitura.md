@@ -234,3 +234,18 @@ seguendo il formato sopra)*
   tramite il codice dell'app (non solo `ftplib` grezzo) contro lo spazio
   Aruba vero.
 - Stato: risolto
+
+### [Fase 4] Bug reale: sintassi errata chiamate librouteros in backup/export
+- Contesto: testando il backup manuale su router-lab (hardware reale), tutti
+  i tentativi fallivano con `'Path' object has no attribute 'call'`. Bug mai
+  emerso prima perché senza VPS/router reale il task non era mai stato
+  eseguito contro un router vero.
+- Causa: `backups/tasks.py` usava `api.path('/system/backup').call('save',
+  {'name': basename})`, ma `librouteros.api.Path` non ha un metodo `.call()`:
+  è direttamente chiamabile (`__call__(self, cmd, **kwargs)`), quindi la
+  sintassi corretta è `api.path('/system/backup')('save', name=basename)`
+  (kwargs, non un dict posizionale).
+- Verificato con chiamate dirette contro router-lab reale (`/system/backup
+  save` e `/export file=...`) prima di correggere il codice, poi ripulito i
+  file di test dal router.
+- Stato: risolto

@@ -42,10 +42,10 @@ def _generate_remote_file(router: Router, tipo: str, basename: str) -> str:
     try:
         if tipo == Backup.Tipo.BINARIO:
             remote_filename = f'{basename}.backup'
-            tuple(api.path('/system/backup').call('save', {'name': basename}))
+            tuple(api.path('/system/backup')('save', name=basename))
         else:
             remote_filename = f'{basename}.rsc'
-            tuple(api.path('/export').call('', {'file': basename}))
+            tuple(api.path('/export')('', file=basename))
         return remote_filename
     finally:
         api.close()
