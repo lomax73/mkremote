@@ -17,7 +17,7 @@
         <tr>
             <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
             <td>{{ router.location }}</td>
-            <td>{{ router.ip_vpn|default:"—" }}</td>
+            <td class="mono">{{ router.ip_vpn|default:"—" }}</td>
             <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
         </tr>
         {% empty %}

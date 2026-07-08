@@ -11,13 +11,13 @@
     <tr><th>Note</th><td>{{ router.note|linebreaksbr|default:"—" }}</td></tr>
     <tr><th>Modello hardware</th><td>{{ router.modello_hardware|default:"—" }}</td></tr>
     <tr><th>Versione RouterOS</th><td>{{ router.versione_routeros|default:"—" }}</td></tr>
-    <tr><th>IP pubblico / DDNS</th><td>{{ router.ip_pubblico_o_ddns }}</td></tr>
-    <tr><th>Porta SSH</th><td>{{ router.porta_ssh }}</td></tr>
-    <tr><th>Porta API</th><td>{{ router.porta_api }}</td></tr>
-    <tr><th>Username</th><td>{{ router.username }}</td></tr>
-    <tr><th>Password</th><td>••••••••</td></tr>
-    <tr><th>IP VPN</th><td>{{ router.ip_vpn|default:"—" }}</td></tr>
-    <tr><th>Chiave pubblica WireGuard</th><td>{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
+    <tr><th>IP pubblico / DDNS</th><td class="mono">{{ router.ip_pubblico_o_ddns }}</td></tr>
+    <tr><th>Porta SSH</th><td class="mono">{{ router.porta_ssh }}</td></tr>
+    <tr><th>Porta API</th><td class="mono">{{ router.porta_api }}</td></tr>
+    <tr><th>Username</th><td class="mono">{{ router.username }}</td></tr>
+    <tr><th>Password</th><td class="mono">••••••••</td></tr>
+    <tr><th>IP VPN</th><td class="mono">{{ router.ip_vpn|default:"—" }}</td></tr>
+    <tr><th>Chiave pubblica WireGuard</th><td class="mono">{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
     <tr><th>Intervallo backup</th><td>{{ router.intervallo_backup|default:"—" }}</td></tr>
     <tr>
         <th>Ultimo backup</th>
