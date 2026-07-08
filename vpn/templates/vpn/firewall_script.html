@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Blocco accesso pubblico — {{ router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-detail' router.pk %}">&larr; {{ router.nome }}</a></p>
+<h1>Blocco accesso pubblico — {{ router.nome }}</h1>
+
+<div id="warning-box">
+    <p>
+        <strong>Esegui questo script solo dopo aver verificato che il tunnel VPN
+        funziona</strong> (stato "Connesso"). Tieni aperta una sessione WinBox/SSH
+        separata come rete di sicurezza: se qualcosa va storto in questa
+        configurazione firewall, rischi di perdere l'accesso remoto al router.
+    </p>
+</div>
+
+<p>Copia e incolla questo script in un terminale RouterOS (WinBox o SSH) del router.</p>
+<pre style="background:#111827; color:#e5e7eb; padding:1rem; border-radius:8px; overflow-x:auto;"><code>{{ script }}</code></pre>
+
+<h2>Dopo l'esecuzione</h2>
+<p>
+    Verifica che SSH/API/WebFig non rispondano più dall'IP pubblico
+    (<code class="mono">{{ router.ip_pubblico_o_ddns }}</code>) ma continuino a
+    rispondere dall'IP VPN (<code class="mono">{{ router.ip_vpn }}</code>). Solo a
+    questo punto conferma il blocco:
+</p>
+<form method="post" action="{% url 'vpn-confirm-lockdown' router.pk %}">
+    {% csrf_token %}
+    <button class="btn" type="submit">Conferma blocco applicato</button>
+</form>
+{% endblock %}

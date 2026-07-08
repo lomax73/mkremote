@@ -18,7 +18,12 @@ from .hub_client import (
     remove_peer_from_hub,
 )
 from .models import PersonalVpnDevice
-from .scripts import VpnHubNotConfigured, generate_personal_client_conf, generate_wireguard_setup_script
+from .scripts import (
+    VpnHubNotConfigured,
+    generate_firewall_lockdown_script,
+    generate_personal_client_conf,
+    generate_wireguard_setup_script,
+)
 from .services import VpnSubnetExhausted, assign_personal_vpn_ip, assign_vpn_ip, generate_wireguard_keypair
 
 
@@ -73,6 +78,33 @@ class TestVpnConnectionView(LoginRequiredMixin, View):
         else:
             messages.error(request, "Connessione VPN fallita: il router non risponde sull'IP VPN.")
         return redirect('vpn-generate-script', pk=router.pk)
+
+
+class GenerateFirewallLockdownScriptView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        if router.stato_connessione != Router.StatoConnessione.CONNESSO:
+            messages.error(
+                request,
+                'Il router deve risultare "Connesso" (tunnel VPN già verificato) '
+                'prima di poter bloccare l\'accesso pubblico.',
+            )
+            return redirect('router-detail', pk=router.pk)
+        try:
+            script = generate_firewall_lockdown_script(router)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect('router-detail', pk=router.pk)
+        return render(request, 'vpn/firewall_script.html', {'router': router, 'script': script})
+
+
+class ConfirmFirewallLockdownView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        router.accesso_pubblico_bloccato = True
+        router.save(update_fields=['accesso_pubblico_bloccato'])
+        messages.success(request, 'Blocco accesso pubblico confermato: il router è raggiungibile solo dalla VPN.')
+        return redirect('router-detail', pk=router.pk)
 
 
 class PersonalDeviceListView(LoginRequiredMixin, View):

@@ -55,6 +55,50 @@ def generate_wireguard_setup_script(router) -> str:
 """
 
 
+def generate_firewall_lockdown_script(router) -> str:
+    """Genera lo script RouterOS (.rsc) per bloccare l'esposizione pubblica di
+    SSH/API/WebFig, lasciandoli raggiungibili solo dalla subnet VPN (Fase 3).
+
+    Le regole vengono inserite in cima alla chain input con `place-before`
+    crescente (0, 1, 2, ...): ogni nuova regola sfila in quella posizione
+    esatta, quindi l'ordine finale rispecchia l'ordine testuale dello script
+    (prima gli accept dalla VPN, poi i drop generali) senza toccare o
+    riordinare le regole già presenti sul router."""
+    if not router.ip_vpn:
+        raise ValueError('Il router non ha ancora un ip_vpn assegnato: completa prima la Fase 2.')
+
+    return f"""\
+# === MKRemote - Blocco accesso pubblico ===
+# Router: {router.nome}
+# ATTENZIONE: esegui questo script SOLO se il router risulta "Connesso"
+# (tunnel VPN già verificato con successo). Tieni aperta una sessione
+# WinBox/SSH separata come rete di sicurezza mentre lo applichi: se qualcosa
+# va storto potresti perdere l'accesso remoto al router.
+
+# 1) Accetta SSH/API/WebFig SOLO dalla subnet VPN (valutate per prime).
+/ip firewall filter add chain=input action=accept protocol=tcp dst-port={router.porta_ssh} \\
+    src-address={settings.VPN_SUBNET_CIDR} place-before=0 comment="MKRemote: consenti SSH da VPN"
+/ip firewall filter add chain=input action=accept protocol=tcp dst-port={router.porta_api} \\
+    src-address={settings.VPN_SUBNET_CIDR} place-before=1 comment="MKRemote: consenti API da VPN"
+/ip firewall filter add chain=input action=accept protocol=tcp dst-port=80,443 \\
+    src-address={settings.VPN_SUBNET_CIDR} place-before=2 comment="MKRemote: consenti WebFig da VPN"
+
+# 2) Droppa le stesse porte da qualunque altra sorgente (arrivano dopo gli
+#    accept di cui sopra, quindi non bloccano il traffico VPN).
+/ip firewall filter add chain=input action=drop protocol=tcp dst-port={router.porta_ssh} \\
+    place-before=3 comment="MKRemote: blocca SSH pubblico"
+/ip firewall filter add chain=input action=drop protocol=tcp dst-port={router.porta_api} \\
+    place-before=4 comment="MKRemote: blocca API pubblico"
+/ip firewall filter add chain=input action=drop protocol=tcp dst-port=80,443 \\
+    place-before=5 comment="MKRemote: blocca WebFig pubblico"
+
+# Non tocca nessun'altra regola firewall già presente: solo aggiunte in cima.
+# Dopo aver verificato che SSH/API/WebFig non rispondono più sull'IP
+# pubblico ma continuano a rispondere su {router.ip_vpn}, torna nell'app e
+# premi "Conferma blocco applicato".
+"""
+
+
 def generate_personal_client_conf(private_key: str, ip_vpn: str) -> str:
     """Genera il file .conf per un dispositivo personale (Fase 7): laptop o
     telefono, da importare nell'app WireGuard ufficiale (anche via QR code).
