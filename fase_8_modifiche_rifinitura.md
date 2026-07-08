@@ -506,3 +506,29 @@ esplicita che con navigazione via).
 - Stato: chiusa. Rinominato
   `fase_2_script_wireguard_esecuzione_da_finire.md` →
   `fase_2_script_wireguard_terminato.md`.
+
+### [Fase 3] Implementato il generatore di script firewall; in attesa di verifica reale dell'utente
+- Aggiunto `generate_firewall_lockdown_script` in `vpn/scripts.py`: usa
+  `place-before` crescente (0, 1, 2, ...) per ogni regola aggiunta in
+  sequenza, cosa che garantisce l'ordine finale (accept da VPN prima, drop
+  generali dopo) indipendentemente da quante regole esistano già sul router,
+  senza toccarle.
+- Pulsante "Blocca accesso pubblico" visibile solo se
+  `stato_connessione == connesso` (mai su un router non ancora verificato via
+  VPN), con warning esplicito prima di mostrare lo script e pulsante
+  "Conferma blocco applicato" che imposta `accesso_pubblico_bloccato=True`.
+- Verificato via HTTP reale sul VPS che lo script si genera correttamente per
+  router-lab (porte 22/8728/80/443, subnet VPN corretta).
+- Proposto di applicare io stesso lo script su router-lab via SSH sull'IP
+  VPN (che resta comunque raggiungibile anche dopo il blocco, essendo
+  l'unica sorgente consentita) per completare la verifica end-to-end; **su
+  scelta esplicita dell'utente, sarà lui stesso ad applicarlo da WinBox**,
+  con la propria rete di sicurezza aperta, e a confermare l'esito.
+- Nota di limite noto: se lo script viene rigenerato e riapplicato più volte
+  sullo stesso router (es. dopo aver cambiato porta SSH), le regole
+  precedenti non vengono rimosse: si accumulano regole MKRemote duplicate.
+  Non blocca il funzionamento ma andrebbe ripulito manualmente in quel caso;
+  non risulta un problema per lo scenario "singola applicazione" richiesto
+  dai criteri di completamento della fase.
+- Stato: rimane `_esecuzione_da_finire` in attesa che l'utente applichi lo
+  script su router-lab e confermi che SSH/API rispondono solo dalla VPN.
