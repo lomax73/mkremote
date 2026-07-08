@@ -347,3 +347,69 @@ esplicita che con navigazione via).
 - Stato: rimandato — la fase resta `_esecuzione_da_finire` finché non è
   possibile ripetere la verifica fatta per Fase 4 su router-lab reale
   (idealmente dopo che Fase 2 sarà a sua volta chiusa).
+
+### [Fase 5] Bug reale trovato in migrazione: `IntervalSchedule.SECONDS` non esiste sul modello storico
+- Contesto: `monitoring/migrations/0002_poll_periodic_task.py` usa
+  `apps.get_model('django_celery_beat', 'IntervalSchedule')` per registrare
+  il `PeriodicTask` del polling, seguendo lo stesso schema già usato in
+  `backups/migrations/0002_cleanup_periodic_task.py`. A differenza di
+  quest'ultima (che usa solo stringhe letterali per `CrontabSchedule`), la
+  migrazione di Fase 5 referenziava `IntervalSchedule.SECONDS`, una costante
+  di classe definita solo sul modello Python reale — il modello "storico"
+  restituito da `apps.get_model()` è una ricostruzione a partire dallo stato
+  delle migrazioni e non porta con sé costanti di classe non serializzate,
+  causando `AttributeError: type object 'IntervalSchedule' has no attribute
+  'SECONDS'` al primo `migrate` sul VPS.
+- Non emerso prima perché mai eseguito contro un database reale: gli unici
+  controlli pre-merge erano stati `manage.py check` e
+  `makemigrations --check`, che non eseguono le `RunPython` delle migrazioni
+  dati.
+- Fix: sostituita la costante con il valore letterale `'seconds'` (verificato
+  in `django_celery_beat/models.py: SECONDS = 'seconds'`), coerente con
+  l'approccio già in uso per `CrontabSchedule`.
+- Stato: risolto e verificato — `migrate` applicato con successo sul VPS,
+  `PeriodicTask` "monitoring-poll-routers" creato correttamente (ogni 120s).
+
+### [Fase 5] Chiusura fase: verifica end-to-end su hardware reale (router-lab)
+- Prerequisito Fase 2 nel frattempo soddisfatto (router-lab collegato via
+  WireGuard, `ip_vpn=10.10.0.10`): eseguita la verifica end-to-end rimandata
+  in precedenza.
+- Merge di PR #1 (lavoro della sessione parallela sulla worktree
+  `fase5-monitoraggio`), deploy sul VPS (`git pull`, `migrate`,
+  `collectstatic`, restart `mkremote-web`/`mkremote-celery-worker`/
+  `mkremote-celery-beat`).
+- Verificato con `poll_routers_task()` invocato manualmente: raccolta reale
+  via `librouteros` su router-lab — CPU 0%, RAM ~350MB/1GB, uptime ~4h54m,
+  temperatura 32°C (quindi `/system/health` con sensore di temperatura
+  presente e letto correttamente), contatori traffico per interfaccia
+  (`lo`, `ether1-4`, ecc.).
+- Verificato il rilevamento offline: simulati 3 fallimenti di polling
+  consecutivi (soglia configurata) → router marcato `offline` e
+  `AlertEvent` di tipo `offline` aperto; un successivo poll reale riuscito
+  riporta lo stato a `connesso`, azzera il contatore e chiude l'alert.
+- Verificato l'alert CPU: soglia temporaneamente forzata a 0% → alert
+  `cpu_alta` aperto; soglia ripristinata a 90% e nuovo poll → alert chiuso.
+  Stessa logica (condivisa) vale per `temperatura_alta` e per
+  `backup_fallito` (già agganciato a `backups/tasks.py`).
+- Verificato che il `PeriodicTask` gira autonomamente in produzione (non
+  solo per invocazione manuale): log di `mkremote-celery-beat` mostra
+  "Sending due task monitoring-poll-routers" ogni 120s, log del worker
+  mostra il task ricevuto ed eseguito con successo, nuova `RouterMetric`
+  salvata nel DB con timestamp coerente.
+- Verificate le pagine reali via HTTP autenticato: dashboard
+  `/monitoraggio/` mostra router-lab con stato "Connesso" e CPU reale;
+  pagina dettaglio `/monitoraggio/router/<pk>/` e endpoint JSON
+  `dati.json` (usato dai grafici Chart.js) rispondono con i dati storici
+  reali.
+- **Non verificato**: invio effettivo di notifiche Telegram/email reali.
+  L'utente ha scelto esplicitamente di non fornire credenziali (bot token
+  Telegram, SMTP) in questa sessione di verifica; la logica di
+  apertura/chiusura alert e di anti-spam a cooldown (`_should_notify`) è
+  stata verificata a livello di modello/DB, ma non l'effettiva consegna dei
+  messaggi. Da verificare quando saranno disponibili credenziali reali,
+  configurabili da interfaccia in "Impostazioni alert".
+  router-lab lasciato collegato e in stato "connesso" al termine dei test,
+  come da indicazione data per le fasi precedenti.
+- Stato: chiusa. Rinominato
+  `fase_5_monitoraggio_alert_esecuzione_da_finire.md` →
+  `fase_5_monitoraggio_alert_terminato.md`.
