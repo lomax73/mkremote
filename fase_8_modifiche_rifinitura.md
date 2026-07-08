@@ -112,11 +112,23 @@ seguendo il formato sopra)*
   di dare un falso successo. Verificato l'intero flusso (comprese le due
   modalità di fallimento: hub non configurato, VPS non raggiungibile) con
   Django test client su SQLite in-memory.
-- Cosa resta da fare quando il VPS sarà pronto: valorizzare le variabili env,
-  testare lo script su un router Mikrotik reale, verificare che un secondo
-  router non rompa il primo, verificare "Test connessione" con un router vero
-  raggiungibile in VPN.
-- Stato: rimandato
+- Aggiornamento 2026-07-08: il VPS Aruba è stato provisionato (vedi voce
+  "Cambio provider VPS" sotto). Hub WireGuard `wg0` attivo, servizi systemd
+  (`mkremote-web`, `mkremote-celery-worker`, `mkremote-celery-beat`) attivi.
+  Verificato con un peer di prova (chiave WireGuard generata al volo,
+  rimossa subito dopo il test): `assign_vpn_ip` assegna IP reale dal DB
+  Postgres, `generate_wireguard_setup_script` produce uno script valido,
+  `register_peer_on_hub` registra davvero il peer su `wg0` (verificato con
+  `wg show wg0` e persistenza in `/etc/wireguard/wg0.conf`) passando
+  attraverso una chiave SSH dedicata con forced-command ristretto (vedi
+  `/usr/local/sbin/mkremote-wg-peer.sh` sul VPS), non root pieno.
+- Cosa resta da fare (richiede hardware reale, non ottenibile diversamente):
+  eseguire lo script `.rsc` generato su un router Mikrotik fisico/VM RouterOS
+  vero, verificare che il tunnel si stabilisca dal lato router, verificare
+  che un secondo router non rompa il collegamento del primo, verificare "Test
+  connessione" con un router vero raggiungibile in VPN.
+- Stato: parzialmente risolto (infrastruttura e integrazione VPS verificate;
+  resta solo il test con hardware Mikrotik reale)
 
 ### [Fase 4] Saltata la Fase 3, prerequisiti formali non soddisfatti
 - Contesto: l'utente ha chiesto esplicitamente di procedere con la Fase 4 senza
@@ -150,4 +162,32 @@ seguendo il formato sopra)*
   la pulizia per retention rimuove correttamente i backup più vecchi oltre la
   soglia. Non verificato: upload/delete reali su Hetzner Object Storage (serve
   credenziali reali) e l'intero flusso con un router Mikrotik reale in VPN.
-- Stato: rimandato
+- Aggiornamento 2026-07-08: ritestando la sincronizzazione `PeriodicTask` sul
+  VPS reale (Postgres + Celery veri, non SQLite in-memory), il segnale
+  **non scattava**: bug reale, non emerso nel test isolato precedente. Causa:
+  `post_save.connect()` usa per default una referenza debole (`weak=True`) al
+  receiver; il receiver era una closure locale definita dentro
+  `BackupsConfig.ready()`, senza nessun riferimento forte sopravvissuto dopo
+  il return di `ready()` — il garbage collector la raccoglieva, disconnettendo
+  il segnale in silenzio (probabilmente sopravvissuta per caso nel test breve
+  precedente, prima che il GC ciclico girasse). Corretto spostando il
+  receiver a livello di modulo (`backups.signals.router_post_save`) e
+  aggiungendo `weak=False` per sicurezza. Riverificato sul VPS reale: ora
+  funziona. Lezione: i test su SQLite in-memory/processi brevi non bastano a
+  scovare bug di garbage collection sui signal — serve un ambiente a lungo
+  termine come quello reale.
+- Stato: object storage ancora rimandato (serve credenziali reali); resto
+  del flusso backup verificato/corretto su infrastruttura reale
+
+### [Fase 0] Cambio provider VPS: Aruba invece di Hetzner
+- Contesto: i documenti di fase (fase_0, fase_4) indicano esplicitamente "VPS
+  Hetzner Ubuntu 24.04" e "Hetzner Object Storage". L'utente ha deciso di usare
+  un VPS Aruba invece di Hetzner.
+- Scelta di default adottata: procediamo con il provisioning su Aruba. La
+  questione dell'Object Storage per i backup (Fase 4) resta esplicitamente
+  rimandata (nessun servizio scelto ancora: Aruba Object Storage, altro
+  provider S3-compatibile, o Hetzner Object Storage lasciato separato). Nessun
+  riferimento a "Hetzner" è hardcoded nel codice: i parametri (endpoint S3,
+  IP/host VPS) sono tutti letti da `.env`, quindi il cambio provider non
+  richiede modifiche al codice, solo ai valori di configurazione.
+- Stato: da decidere (Object Storage)
