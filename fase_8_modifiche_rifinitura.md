@@ -487,3 +487,22 @@ esplicita che con navigazione via).
 - Stato: chiusa. Rinominato
   `fase_7_accesso_personale_vpn_esecuzione_da_finire.md` →
   `fase_7_accesso_personale_vpn_terminato.md`.
+
+### [Fase 2] Chiusura fase: confermato con un secondo router reale
+- Ultimo criterio di completamento rimasto aperto: "aggiungere un secondo
+  router non rompe il collegamento del primo", non verificabile prima per
+  mancanza di un secondo apparato Mikrotik reale.
+- L'utente ha collegato un secondo router reale ("AP_Casa_Lomax",
+  `ip_vpn=10.10.0.11`) seguendo la stessa procedura di router-lab. Verificato
+  su `wg show wg0` sul VPS: entrambi i peer router presenti con handshake
+  recente, `stato_connessione=connesso` per entrambi in `Router.objects`,
+  nessun impatto sul peer del dispositivo VPN personale già registrato
+  (Fase 7) né sul tunnel di router-lab.
+- Tutti i criteri di completamento della fase sono ora verificati: tunnel che
+  si stabilisce da script generato, test di connessione dall'app riuscito,
+  secondo router che non rompe il primo, nessuna chiave privata di router
+  mai transitata o salvata nel backend (lo script la genera e la tiene solo
+  sul router stesso).
+- Stato: chiusa. Rinominato
+  `fase_2_script_wireguard_esecuzione_da_finire.md` →
+  `fase_2_script_wireguard_terminato.md`.
