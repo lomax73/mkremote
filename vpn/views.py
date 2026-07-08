@@ -44,7 +44,7 @@ class SaveWireguardPublicKeyView(LoginRequiredMixin, View):
             router.chiave_pubblica_wireguard = public_key
             router.save(update_fields=['chiave_pubblica_wireguard'])
             messages.success(request, 'Chiave pubblica salvata.')
-        return redirect('router-detail', pk=router.pk)
+        return redirect('vpn-generate-script', pk=router.pk)
 
 
 class RegisterPeerView(LoginRequiredMixin, View):
@@ -52,7 +52,7 @@ class RegisterPeerView(LoginRequiredMixin, View):
         router = get_object_or_404(Router, pk=pk)
         if not router.chiave_pubblica_wireguard or not router.ip_vpn:
             messages.error(request, 'Servono sia la chiave pubblica che un IP VPN assegnato prima di registrare il peer.')
-            return redirect('router-detail', pk=router.pk)
+            return redirect('vpn-generate-script', pk=router.pk)
         try:
             register_peer_on_hub(router.chiave_pubblica_wireguard, router.ip_vpn)
         except (VpsNotConfigured, VpsCommandFailed) as exc:
@@ -61,7 +61,7 @@ class RegisterPeerView(LoginRequiredMixin, View):
             router.stato_connessione = Router.StatoConnessione.IN_ATTESA_VPN
             router.save(update_fields=['stato_connessione'])
             messages.success(request, 'Peer registrato sul VPS. Esegui ora il test connessione.')
-        return redirect('router-detail', pk=router.pk)
+        return redirect('vpn-generate-script', pk=router.pk)
 
 
 class TestVpnConnectionView(LoginRequiredMixin, View):
@@ -72,7 +72,7 @@ class TestVpnConnectionView(LoginRequiredMixin, View):
             messages.success(request, "Connessione VPN riuscita: il router risponde sull'IP VPN.")
         else:
             messages.error(request, "Connessione VPN fallita: il router non risponde sull'IP VPN.")
-        return redirect('router-detail', pk=router.pk)
+        return redirect('vpn-generate-script', pk=router.pk)
 
 
 class PersonalDeviceListView(LoginRequiredMixin, View):
