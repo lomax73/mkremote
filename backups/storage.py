@@ -1,3 +1,4 @@
+import io
 from ftplib import FTP_TLS, error_perm
 
 from django.conf import settings
@@ -50,6 +51,17 @@ def upload_backup_file(local_path: str, router_nome: str, filename: str) -> str:
     finally:
         ftp.quit()
     return f'{remote_dir}/{filename}'
+
+
+def download_backup_file(storage_path: str) -> bytes:
+    _require_config()
+    ftp = _connect()
+    try:
+        buf = io.BytesIO()
+        ftp.retrbinary(f'RETR {storage_path}', buf.write)
+        return buf.getvalue()
+    finally:
+        ftp.quit()
 
 
 def delete_backup_file(storage_path: str) -> None:

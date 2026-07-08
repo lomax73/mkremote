@@ -16,6 +16,7 @@
             <th>Tipo</th>
             <th>Esito</th>
             <th>Dimensione</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -31,9 +32,14 @@
                 {% endif %}
             </td>
             <td>{{ backup.dimensione_bytes|default:"—" }}</td>
+            <td>
+                {% if backup.storage_path %}
+                    <a href="{% url 'backup-download' router.pk backup.pk %}">Scarica</a>
+                {% endif %}
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="4">Nessun backup ancora eseguito.</td></tr>
+        <tr><td colspan="5">Nessun backup ancora eseguito.</td></tr>
         {% endfor %}
     </tbody>
 </table>
