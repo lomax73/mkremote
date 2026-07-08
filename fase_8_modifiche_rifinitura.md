@@ -471,3 +471,19 @@ esplicita che con navigazione via).
 - Stato: rimane `_esecuzione_da_finire` finché l'utente non importa un
   profilo reale su un proprio dispositivo e conferma di riuscire a
   raggiungere hub e router-lab in ping.
+
+### [Fase 7] Chiusura fase: confermato ping reale da dispositivo fisico
+- Creato tramite l'app un dispositivo reale ("Telefono di Fabrizio", IP VPN
+  `10.10.0.2`), profilo consegnato all'utente come QR + `.conf` in una pagina
+  one-time (mai persistita sul server), file temporanei con la chiave privata
+  ripuliti dal VPS subito dopo la generazione.
+- L'utente ha importato il profilo sul proprio telefono e confermato
+  esplicitamente: ping riuscito sia verso l'hub (`10.10.0.1`) sia verso
+  router-lab (`10.10.0.10`) attraverso il tunnel.
+- Tutti i criteri di completamento della fase sono quindi verificati:
+  creazione dispositivo → profilo funzionante da telefono reale → ping a hub
+  e router già collegati → revoca disattiva l'accesso (verificato lato
+  server nella voce precedente).
+- Stato: chiusa. Rinominato
+  `fase_7_accesso_personale_vpn_esecuzione_da_finire.md` →
+  `fase_7_accesso_personale_vpn_terminato.md`.
