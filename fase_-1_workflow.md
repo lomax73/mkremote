@@ -52,8 +52,14 @@ Questo file non è una fase di sviluppo: è il protocollo che regola come tutte 
 
 ## Ordine delle fasi
 
-`fase_0` → `fase_1` → `fase_2` → `fase_3` → `fase_4` → `fase_5` → `fase_6` → `fase_7`
+`fase_0` → `fase_1` → `fase_2` → `fase_3` → `fase_4` → `fase_5` → `fase_6` → `fase_7` →
+`fase_9`
 
 `fase_8_modifiche_rifinitura.md` non segue questo ordine: è un file "vivo", aggiornato
 in continuazione durante tutte le altre fasi, e viene affrontato per ultimo (o quando
 l'utente lo richiede esplicitamente).
+
+`fase_9` (restyling grafico) tocca solo template/CSS, non la logica applicativa: può
+essere anticipata o posticipata rispetto alle fasi 2-7 senza rischi, ma ha più senso
+farla quando le viste principali sono stabili per non restylare più volte le stesse
+pagine.
