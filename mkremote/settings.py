@@ -71,6 +71,27 @@ BACKUP_FTP_USER = os.environ.get('BACKUP_FTP_USER', '')
 BACKUP_FTP_PASSWORD = os.environ.get('BACKUP_FTP_PASSWORD', '')
 BACKUP_FTP_BASE_PATH = os.environ.get('BACKUP_FTP_BASE_PATH', 'mikrotik-backups')
 
+# Polling di monitoraggio e alert (Fase 5).
+MONITORING_POLL_INTERVAL_SECONDS = int(os.environ.get('MONITORING_POLL_INTERVAL_SECONDS', '120'))
+
+# Bot Telegram per gli alert (token da @BotFather); il chat_id destinatario è
+# invece configurabile da interfaccia (AlertSettings), non da env, perché può
+# cambiare senza bisogno di un redeploy.
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+
+# SMTP per gli alert via email (Fase 5). Se non configurato, EMAIL_BACKEND
+# resta quello di sviluppo di Django (stampa le email in console).
+if os.environ.get('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'mkremote@example.com')
+
 
 # Application definition
 

@@ -50,6 +50,11 @@ class Router(models.Model):
 
     accesso_pubblico_bloccato = models.BooleanField(default=False)
 
+    fallimenti_polling_consecutivi = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Contatore di polling falliti di fila (Fase 5); azzerato al primo successo.',
+    )
+
     creato_il = models.DateTimeField(auto_now_add=True)
     modificato_il = models.DateTimeField(auto_now=True)
 

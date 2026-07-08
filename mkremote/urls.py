@@ -10,4 +10,5 @@ urlpatterns = [
     path('', include('vpn.urls')),
     path('', include('backups.urls')),
     path('', include('terminal.urls')),
+    path('', include('monitoring.urls')),
 ]

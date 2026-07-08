@@ -327,3 +327,23 @@ terminale funzionante con comandi reali eseguiti e risposta ricevuta, link
 WebFig raggiungibile sull'IP VPN, sessioni chiuse correttamente senza
 lasciare processi SSH orfani sul router (verificato sia con chiusura
 esplicita che con navigazione via).
+
+### [Fase 5] Verifica con hardware reale rimandata: prerequisito Fase 2 non chiuso
+- Contesto: la Fase 5 richiede "Fase 2 (VPN) terminata almeno per i router da
+  monitorare", ma `fase_2_script_wireguard` è ancora `_esecuzione_da_finire`.
+  Su indicazione esplicita dell'utente si è comunque implementata tutta la
+  logica applicativa (modelli, task Celery di polling, alert Telegram/email,
+  dashboard e grafici), lasciando come sospeso solo ciò che richiede un
+  router realmente raggiungibile in VPN.
+- Cosa NON è stato ancora verificato con hardware reale: raccolta metriche via
+  `librouteros` su un router vero, notifica effettiva entro il tempo atteso
+  spegnendo/scollegando un router di test, comportamento di `/system/health`
+  su modelli senza sensore di temperatura (gestito con `try/except` ma mai
+  osservato su un router reale).
+- Scelta di default adottata: implementazione completa e coerente con i
+  pattern già in uso (stesso schema di `backups/tasks.py` per la connessione
+  API, stesso schema di `backups/signals.py`+migration dati per la
+  registrazione del `PeriodicTask` in `django-celery-beat`).
+- Stato: rimandato — la fase resta `_esecuzione_da_finire` finché non è
+  possibile ripetere la verifica fatta per Fase 4 su router-lab reale
+  (idealmente dopo che Fase 2 sarà a sua volta chiusa).

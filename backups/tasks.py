@@ -7,6 +7,8 @@ import asyncssh
 import librouteros
 from celery import shared_task
 
+from monitoring.models import AlertEvent
+from monitoring.notifications import close_alert, open_or_get_alert
 from routers.models import Router
 
 from .models import Backup
@@ -62,13 +64,16 @@ def _run_backup_one(router: Router, tipo: str) -> None:
             storage_path = upload_backup_file(local_path, router.nome, remote_filename)
     except ObjectStorageNotConfigured as exc:
         Backup.objects.create(router=router, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
+        open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
     except Exception as exc:  # connessione router, SFTP, backup RouterOS falliti, ecc.
         Backup.objects.create(router=router, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
+        open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
     else:
         Backup.objects.create(
             router=router, tipo=tipo, esito=Backup.Esito.RIUSCITO,
             storage_path=storage_path, dimensione_bytes=size,
         )
+        close_alert(router, AlertEvent.Tipo.BACKUP_FALLITO)
 
 
 @shared_task
