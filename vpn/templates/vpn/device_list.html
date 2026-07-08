@@ -12,7 +12,13 @@
     <tbody>
         {% for device in dispositivi %}
         <tr>
-            <td>{{ device.nome }}</td>
+            <td>
+                <form method="post" action="{% url 'vpn-device-rename' device.pk %}" style="display:flex; gap:0.4rem;">
+                    {% csrf_token %}
+                    <input type="text" name="nome" value="{{ device.nome }}" required style="max-width:180px;">
+                    <button class="btn" type="submit">Salva</button>
+                </form>
+            </td>
             <td class="mono">{{ device.ip_vpn }}</td>
             <td>
                 {% if device.attivo %}

@@ -144,6 +144,19 @@ class AddPersonalDeviceView(LoginRequiredMixin, View):
         })
 
 
+class RenamePersonalDeviceView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        device = get_object_or_404(PersonalVpnDevice, pk=pk, utente=request.user)
+        nome = request.POST.get('nome', '').strip()
+        if not nome:
+            messages.error(request, 'Il nome non può essere vuoto.')
+        else:
+            device.nome = nome
+            device.save(update_fields=['nome'])
+            messages.success(request, 'Nome dispositivo aggiornato.')
+        return redirect('vpn-device-list')
+
+
 class RevokePersonalDeviceView(LoginRequiredMixin, View):
     def post(self, request, pk):
         device = get_object_or_404(PersonalVpnDevice, pk=pk, utente=request.user)
