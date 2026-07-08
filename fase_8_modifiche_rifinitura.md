@@ -438,3 +438,36 @@ esplicita che con navigazione via).
   creato in Fase 2) con una seconda regex che accetta anche la variante
   `wg set wg0 peer <chiave> remove && wg showconf ... && wg syncconf ...`.
 - Stato: implementato, verifica end-to-end in corso (vedi voce successiva).
+
+### [Fase 7] Verifica end-to-end lato server (VPS reale); manca ancora il test da dispositivo fisico
+- Estesa la whitelist regex del wrapper a comando forzato sul VPS
+  (`/usr/local/sbin/mkremote-wg-peer.sh`, backup salvato come `.bak` prima
+  della modifica) per accettare anche la variante di rimozione peer;
+  verificato che comandi non validi/iniettati restano rifiutati con
+  "Comando non consentito" sia per la variante register che per quella
+  remove.
+- Deploy sul VPS (`git pull`, `migrate`, `collectstatic`, restart dei tre
+  servizi) senza problemi: la migration `vpn.0001_initial` (modello
+  `PersonalVpnDevice`) non ha lo stesso tipo di insidia trovata in Fase 5
+  perché non fa `RunPython` su modelli di terze parti.
+- Verificato via HTTP autenticato reale (login con l'utente admin): creazione
+  di un dispositivo di test ("test-verifica-fase7") tramite
+  `/vpn/dispositivi/aggiungi/` → risposta con `.conf` e QR generati, IP
+  assegnato `10.10.0.2` (primo IP libero della fascia personale, come
+  atteso); `wg show wg0` sul VPS conferma il nuovo peer con
+  `allowed ips: 10.10.0.2/32`, corrispondente esattamente alla chiave
+  pubblica salvata nel record `PersonalVpnDevice`; il peer di router-lab
+  (`10.10.0.10/32`) resta intatto, a conferma che l'operazione è additiva e
+  non tocca gli altri peer.
+- Verificata la revoca: POST su `/vpn/dispositivi/<pk>/revoca/` → il peer
+  sparisce da `wg show wg0`, il record `PersonalVpnDevice` risulta
+  `attivo=False` con `revocato_il` valorizzato.
+- **Non verificato**: il criterio di completamento "l'utente si collega da
+  telefono/PC con l'app WireGuard ufficiale e raggiunge (ping) il VPS e i
+  router" richiede un dispositivo fisico reale con l'app WireGuard, non
+  riproducibile da questa sessione. Il file `.conf` generato è stato
+  validato solo a livello di formato/contenuto (endpoint, chiave, subnet
+  corretti), non con un vero handshake da client esterno.
+- Stato: rimane `_esecuzione_da_finire` finché l'utente non importa un
+  profilo reale su un proprio dispositivo e conferma di riuscire a
+  raggiungere hub e router-lab in ping.
