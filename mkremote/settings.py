@@ -147,6 +147,16 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'router-list'
 LOGOUT_REDIRECT_URL = 'login'
 
+if not DEBUG:
+    # Il VPS è dietro Nginx che termina TLS e inoltra a Daphne su localhost:
+    # senza questo header Django non saprebbe che la richiesta originale era HTTPS.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
