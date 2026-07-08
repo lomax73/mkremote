@@ -270,3 +270,60 @@ seguendo il formato sopra)*
   (solo protetti da `.htaccess` + non pubblicati). Se in futuro serve difesa
   in profondità, valutare cifratura lato applicazione prima dell'upload.
 - Stato: risolto — Fase 4 chiusa (`fase_4_backup_automatici_terminato.md`)
+
+### [Fase 6] 2FA/conferma per l'apertura del terminale (dubbio rimandato dalla fase)
+- Contesto: la fase suggerisce di "valutare un secondo fattore/conferma
+  esplicita prima di aprire la sessione", trattandosi di un accesso
+  privilegiato.
+- Scelta di default adottata: implementata solo la conferma esplicita
+  (pulsante "Apri sessione terminale" con avviso, nessuna connessione finché
+  non viene cliccato), non un vero secondo fattore (TOTP). Coerente con la
+  decisione già rimandata per il login stesso (2FA generale, vedi sezione
+  "Rifiniture note già previste da subito" in cima a questo file).
+- Stato: rimandato (2FA generale del progetto)
+
+### [Fase 6] Bug reale: incompatibilità redis-py 8.x con channels_redis
+- Contesto: testando il terminale su router-lab reale, la sessione WebSocket
+  crashava dopo pochi secondi con `redis.exceptions.TimeoutError: Timeout
+  reading from localhost:6379`, anche se il comando SSH non c'entrava nulla
+  con Redis.
+- Causa: `channels_redis` 4.3.0 implementa il proprio meccanismo di attesa
+  messaggi con un `BZPOPMIN` a timeout 5s; `redis-py` 8.0.1 (versione molto
+  recente, installata perché `requirements.txt` non aveva un limite
+  superiore) genera un `TimeoutError` non gestito da channels_redis in
+  quello scenario, che si propaga e termina il consumer — chiudendo la
+  sessione SSH attiva in modo del tutto imprevedibile (non al primo comando,
+  ma al primo momento di inattività >5s).
+- Non emerso prima perché nessun test precedente (SQLite in-memory, Celery
+  eager) usava realmente Channels/Redis in un processo a lunga esecuzione.
+- Risolto fissando `redis>=5.0,<6.0` in `requirements.txt` (stessa libreria
+  già usata con successo da Celery). Verificato con un test isolato che
+  `channel_layer.receive()` non solleva più eccezioni oltre il timeout
+  interno di 5s.
+- Stato: risolto
+
+### [Fase 6] Bug reale: sessioni SSH orfane su navigazione via dalla pagina
+- Contesto: dopo aver navigato via dalla pagina del terminale (senza un
+  pulsante di chiusura esplicito, che ancora non esisteva), la connessione
+  SSH tra il VPS e il router restava aperta a tempo indeterminato
+  (verificato con `ss -tnp` sul VPS: connessione ESTABLISHED persistente
+  verso `10.10.0.10:22`), e il record di audit non risultava mai chiuso
+  (`chiusa_il` restava `None`).
+- Causa: il browser non invia sempre un frame di chiusura WebSocket pulito
+  alla navigazione (bfcache e simili), quindi Django Channels non riceveva
+  mai l'evento `websocket.disconnect` e il consumer restava vivo
+  indefinitamente con la connessione SSH aperta.
+- Risolto aggiungendo un listener `pagehide` (più affidabile di
+  `beforeunload`, copre anche i casi di bfcache) che chiama esplicitamente
+  `socket.close()`, più un pulsante "Chiudi sessione" per la chiusura
+  manuale. Verificato in entrambi i casi (click esplicito e navigazione via)
+  che: il record di audit risulta `chiusa_il` valorizzato, e `ss -tnp` sul
+  VPS non mostra più connessioni residue verso il router.
+- Stato: risolto
+
+### [Fase 6] Chiusura fase
+Tutti i criteri di completamento verificati su hardware reale (router-lab):
+terminale funzionante con comandi reali eseguiti e risposta ricevuta, link
+WebFig raggiungibile sull'IP VPN, sessioni chiuse correttamente senza
+lasciare processi SSH orfani sul router (verificato sia con chiusura
+esplicita che con navigazione via).
