@@ -47,6 +47,7 @@
     <a class="btn" href="{% url 'router-terminal' router.pk %}">Terminale</a>
     <a class="btn" href="http://{{ router.ip_vpn }}/" target="_blank" rel="noopener">WebFig</a>
     {% endif %}
+    <a class="btn" href="{% url 'monitoring-router-detail' router.pk %}">Monitoraggio</a>
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
 {% endblock %}

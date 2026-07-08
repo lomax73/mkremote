@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Monitoraggio — {{ router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'monitoring-dashboard' %}">&larr; Monitoraggio</a></p>
+<h1>{{ router.nome }}
+    <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
+</h1>
+
+<canvas id="cpu-chart" height="90" style="margin-bottom:2rem;"></canvas>
+<canvas id="ram-chart" height="90" style="margin-bottom:2rem;"></canvas>
+<canvas id="temp-chart" height="90" style="margin-bottom:2rem;"></canvas>
+
+<h2>Alert recenti</h2>
+<table>
+    <thead>
+        <tr><th>Tipo</th><th>Stato</th><th>Messaggio</th><th>Aperto il</th><th>Chiuso il</th></tr>
+    </thead>
+    <tbody>
+        {% for alert in alert_router %}
+        <tr>
+            <td>{{ alert.get_tipo_display }}</td>
+            <td><span class="badge badge-{% if alert.stato == 'aperto' %}offline{% else %}connesso{% endif %}">{{ alert.get_stato_display }}</span></td>
+            <td>{{ alert.messaggio }}</td>
+            <td>{{ alert.aperto_il }}</td>
+            <td>{{ alert.chiuso_il|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Nessun alert registrato.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+fetch("{% url 'monitoring-router-data' router.pk %}")
+    .then(r => r.json())
+    .then(data => {
+        const labels = data.labels;
+        new Chart(document.getElementById('cpu-chart'), {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'CPU %', data: data.cpu, borderColor: '#27a5de', tension: 0.2 }] },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } },
+        });
+        new Chart(document.getElementById('ram-chart'), {
+            type: 'line',
+            data: { labels, datasets: [
+                { label: 'RAM usata (bytes)', data: data.ram_usata, borderColor: '#1c85b8', tension: 0.2 },
+                { label: 'RAM totale (bytes)', data: data.ram_totale, borderColor: '#9ca3af', tension: 0.2, borderDash: [4, 4] },
+            ] },
+            options: { scales: { y: { beginAtZero: true } } },
+        });
+        new Chart(document.getElementById('temp-chart'), {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Temperatura °C', data: data.temperatura, borderColor: '#ef4444', tension: 0.2 }] },
+        });
+    });
+</script>
+{% endblock %}

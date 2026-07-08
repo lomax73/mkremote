@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Monitoraggio — MKRemote{% endblock %}
+{% block content %}
+<h1>Monitoraggio</h1>
+<p><a class="btn" href="{% url 'monitoring-settings' %}">Impostazioni alert</a></p>
+
+{% if alert_aperti %}
+<h2>Alert aperti</h2>
+<table style="margin-bottom:1.5rem;">
+    <thead>
+        <tr><th>Router</th><th>Tipo</th><th>Messaggio</th><th>Aperto il</th></tr>
+    </thead>
+    <tbody>
+        {% for alert in alert_aperti %}
+        <tr>
+            <td><a href="{% url 'monitoring-router-detail' alert.router.pk %}">{{ alert.router.nome }}</a></td>
+            <td><span class="badge badge-offline">{{ alert.get_tipo_display }}</span></td>
+            <td>{{ alert.messaggio }}</td>
+            <td>{{ alert.aperto_il }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h2>Router</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Stato</th>
+            <th>Ultimo check</th>
+            <th>CPU</th>
+            <th>RAM</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for router in routers %}
+        <tr>
+            <td><a href="{% url 'monitoring-router-detail' router.pk %}">{{ router.nome }}</a></td>
+            <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
+            <td>{{ router.ultima_metrica.rilevato_il|default:"—" }}</td>
+            <td>{% if router.ultima_metrica.cpu_load_percent is not None %}{{ router.ultima_metrica.cpu_load_percent }}%{% else %}—{% endif %}</td>
+            <td>
+                {% if router.ultima_metrica.ram_usata_bytes and router.ultima_metrica.ram_totale_bytes %}
+                    {{ router.ultima_metrica.ram_usata_bytes|filesizeformat }} / {{ router.ultima_metrica.ram_totale_bytes|filesizeformat }}
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Nessun router registrato.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
