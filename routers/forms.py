@@ -19,7 +19,7 @@ class RouterForm(forms.ModelForm):
         fields = [
             'nome', 'location', 'note',
             'modello_hardware', 'versione_routeros',
-            'ip_pubblico_o_ddns', 'porta_ssh', 'porta_api',
+            'ip_pubblico_o_ddns', 'ip_lan', 'porta_ssh', 'porta_api',
             'username',
             'intervallo_backup', 'backup_retention_count',
         ]

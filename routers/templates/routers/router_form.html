@@ -6,6 +6,72 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    <p>
+        <button class="btn" type="button" id="btn-rileva">Rileva caratteristiche dal router</button>
+        <span id="rileva-status" class="mono"></span>
+    </p>
     <button class="btn" type="submit">Salva</button>
 </form>
+<script>
+(function () {
+    var passwordInput = document.getElementById('id_password');
+    if (passwordInput) {
+        var toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn';
+        toggleBtn.style.marginTop = '0.4rem';
+        toggleBtn.setAttribute('aria-label', 'Mostra password');
+        toggleBtn.textContent = '👁 Mostra password';
+        passwordInput.insertAdjacentElement('afterend', toggleBtn);
+        toggleBtn.addEventListener('click', function () {
+            var isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            toggleBtn.textContent = isHidden ? '👁 Nascondi password' : '👁 Mostra password';
+        });
+    }
+
+    var probeBtn = document.getElementById('btn-rileva');
+    var probeStatus = document.getElementById('rileva-status');
+    probeBtn.addEventListener('click', function () {
+        var ipLan = document.getElementById('id_ip_lan').value.trim();
+        var ipPubblico = document.getElementById('id_ip_pubblico_o_ddns').value.trim();
+        var porta = document.getElementById('id_porta_api').value.trim();
+        var username = document.getElementById('id_username').value.trim();
+        var password = passwordInput ? passwordInput.value : '';
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        probeStatus.textContent = 'Connessione in corso…';
+        probeBtn.disabled = true;
+
+        var body = new URLSearchParams();
+        body.set('ip_lan', ipLan);
+        body.set('ip_pubblico_o_ddns', ipPubblico);
+        body.set('porta_api', porta);
+        body.set('username', username);
+        body.set('password', password);
+
+        fetch('{% url "router-probe" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body.toString(),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.ok) {
+                    document.getElementById('id_modello_hardware').value = data.modello_hardware;
+                    document.getElementById('id_versione_routeros').value = data.versione_routeros;
+                    probeStatus.textContent = 'Connessione riuscita: campi compilati.';
+                } else {
+                    probeStatus.textContent = data.error;
+                }
+            })
+            .catch(function () {
+                probeStatus.textContent = 'Errore di rete durante la richiesta.';
+            })
+            .finally(function () {
+                probeBtn.disabled = false;
+            });
+    });
+})();
+</script>
 {% endblock %}
