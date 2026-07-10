@@ -15,7 +15,10 @@
     <tr><th>Porta SSH</th><td class="mono">{{ router.porta_ssh }}</td></tr>
     <tr><th>Porta API</th><td class="mono">{{ router.porta_api }}</td></tr>
     <tr><th>Username</th><td class="mono">{{ router.username }}</td></tr>
-    <tr><th>Password</th><td class="mono">••••••••</td></tr>
+    <tr><th>Password</th><td class="mono">
+        <span id="password-value">••••••••</span>
+        <button class="btn" type="button" id="btn-mostra-password">👁 Mostra password</button>
+    </td></tr>
     <tr><th>IP VPN</th><td class="mono">{{ router.ip_vpn|default:"—" }}</td></tr>
     <tr><th>Chiave pubblica WireGuard</th><td class="mono">{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
     <tr><th>Intervallo backup</th><td>{{ router.intervallo_backup|default:"—" }}</td></tr>
@@ -62,4 +65,50 @@
     {% endif %}
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
+<script>
+(function () {
+    function getCookie(name) {
+        var match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return match ? decodeURIComponent(match.pop()) : null;
+    }
+
+    var btn = document.getElementById('btn-mostra-password');
+    var span = document.getElementById('password-value');
+    var revealed = false;
+    var realPassword = null;
+
+    btn.addEventListener('click', function () {
+        if (revealed) {
+            span.textContent = '••••••••';
+            btn.textContent = '👁 Mostra password';
+            revealed = false;
+            return;
+        }
+        if (realPassword !== null) {
+            span.textContent = realPassword;
+            btn.textContent = '🙈 Nascondi password';
+            revealed = true;
+            return;
+        }
+        btn.disabled = true;
+        fetch('{% url "router-reveal-password" router.pk %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                realPassword = data.password;
+                span.textContent = realPassword;
+                btn.textContent = '🙈 Nascondi password';
+                revealed = true;
+            })
+            .catch(function () {
+                span.textContent = 'Errore nel recupero della password';
+            })
+            .finally(function () {
+                btn.disabled = false;
+            });
+    });
+})();
+</script>
 {% endblock %}

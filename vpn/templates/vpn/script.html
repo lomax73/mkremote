@@ -28,4 +28,9 @@
     {% csrf_token %}
     <button class="btn" type="submit">Test connessione</button>
 </form>
+
+<form method="post" action="{% url 'vpn-fetch-hardware-info' router.pk %}" style="margin-top:1rem;">
+    {% csrf_token %}
+    <button class="btn" type="submit">Rileva caratteristiche dal router</button>
+</form>
 {% endblock %}

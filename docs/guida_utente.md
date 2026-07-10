@@ -25,10 +25,19 @@ lista dei router.
    - **IP pubblico o DDNS**: indirizzo con cui il router è raggiungibile da
      internet *prima* di collegarlo alla VPN (serve solo nella fase di
      configurazione iniziale).
+   - **IP LAN**: indirizzo del router nella rete locale, salvato come
+     riferimento (es. per operazioni dirette in loco). Non viene usato per
+     testare la connessione dall'app: il server dell'app gira sul VPS, quindi
+     non ha accesso diretto alla rete locale del router — la verifica di
+     connessione reale avviene via VPN (vedi punto 2 qui sotto).
    - **Porta SSH** (default 22) e **Porta API** (default 8728): porte del
      router usate per backup, monitoraggio e terminale.
    - **Username** e **Password**: credenziali di amministrazione del router.
-     Sono salvate cifrate nel database, mai in chiaro.
+     Sono salvate cifrate nel database, mai in chiaro. Accanto al campo
+     Password c'è il pulsante **👁 Mostra password**, utile per rileggere
+     quanto hai appena digitato prima di salvare — un secondo click la
+     nasconde di nuovo. Per recuperare la password già salvata di un router
+     esistente, vedi il punto successivo.
    - **Intervallo backup**: ogni quanto tempo eseguire il backup automatico
      (es. `1 00:00:00` per un giorno). Se lasciato vuoto, va impostato più
      avanti o restano solo i backup manuali.
@@ -42,6 +51,11 @@ raggiungibile tramite VPN, va collegato (punto successivo).
 Per modificare un router esistente, apri la sua scheda e clicca **Modifica**.
 La password: se lasciata vuota in modifica, quella esistente **non viene
 sovrascritta**.
+
+**Recuperare la password di un router già salvato**: nella scheda di
+dettaglio del router, alla riga **Password**, clicca **👁 Mostra password**.
+L'app decifra e mostra la password effettivamente salvata (utile se l'hai
+dimenticata); un secondo click la nasconde di nuovo.
 
 Per rimuoverlo definitivamente, apri la scheda e clicca **Elimina** (azione
 irreversibile: cancella anche lo storico di backup e metriche associate).
@@ -69,8 +83,14 @@ l'hub.
    VPN. Se ha successo, lo stato passa a **Connesso** e da qui in poi
    compaiono anche i pulsanti **Terminale** e **WebFig** nella scheda del
    router.
+7. Clicca **Rileva caratteristiche dal router**: si collega al router sullo
+   stesso IP VPN e ne legge modello hardware e versione RouterOS,
+   aggiornando da sola quei due campi sulla scheda del router. Funziona solo
+   dopo che il tunnel VPN è attivo (richiede lo stesso IP VPN del test
+   connessione) e, oltre a compilare i dati, conferma anche che la
+   connessione è effettivamente funzionante.
 
-Se il test fallisce, controlla che lo script sia stato eseguito
+Se il test o il rilevamento falliscono, controlla che lo script sia stato eseguito
 correttamente sul router e che il tunnel sia effettivamente attivo
 (`/interface wireguard peers print` su RouterOS mostra un handshake recente).
 

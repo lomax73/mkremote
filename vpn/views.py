@@ -9,8 +9,9 @@ from django.utils import timezone
 from django.views import View
 
 from routers.models import Router
+from routers.services import RouterProbeError
 
-from .connectivity import test_router_vpn_connection
+from .connectivity import fetch_router_hardware_info, test_router_vpn_connection
 from .hub_client import (
     VpsCommandFailed,
     VpsNotConfigured,
@@ -77,6 +78,21 @@ class TestVpnConnectionView(LoginRequiredMixin, View):
             messages.success(request, "Connessione VPN riuscita: il router risponde sull'IP VPN.")
         else:
             messages.error(request, "Connessione VPN fallita: il router non risponde sull'IP VPN.")
+        return redirect('vpn-generate-script', pk=router.pk)
+
+
+class FetchRouterHardwareInfoView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        try:
+            info = fetch_router_hardware_info(router)
+        except RouterProbeError as exc:
+            messages.error(request, f'Rilevamento caratteristiche fallito: {exc}')
+        else:
+            messages.success(
+                request,
+                f"Caratteristiche aggiornate: {info['modello_hardware']} — RouterOS {info['versione_routeros']}.",
+            )
         return redirect('vpn-generate-script', pk=router.pk)
 
 
