@@ -18,7 +18,7 @@ class Router(models.Model):
     modello_hardware = models.CharField(max_length=100, blank=True)
     versione_routeros = models.CharField(max_length=50, blank=True)
 
-    ip_pubblico_o_ddns = models.CharField(max_length=255)
+    ip_pubblico_o_ddns = models.CharField(max_length=255, blank=True)
     ip_lan = models.GenericIPAddressField(
         protocol='IPv4', null=True, blank=True,
         help_text='IP del router nella rete locale, utile per test diretti prima di configurare la VPN.',

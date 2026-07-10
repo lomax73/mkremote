@@ -22,9 +22,11 @@ lista dei router.
    - **Note**: annotazioni libere (facoltativo).
    - **Modello hardware** / **Versione RouterOS**: facoltativi, utili come
      promemoria.
-   - **IP pubblico o DDNS**: indirizzo con cui il router è raggiungibile da
-     internet *prima* di collegarlo alla VPN (serve solo nella fase di
-     configurazione iniziale).
+   - **IP pubblico o DDNS** (facoltativo): indirizzo con cui il router è
+     raggiungibile da internet *prima* di collegarlo alla VPN (serve solo
+     nella fase di configurazione iniziale). Può essere lasciato vuoto, ad
+     esempio se il router è raggiungibile solo dalla rete locale finché non
+     viene collegato alla VPN.
    - **IP LAN**: indirizzo del router nella rete locale, salvato come
      riferimento (es. per operazioni dirette in loco). Non viene usato per
      testare la connessione dall'app: il server dell'app gira sul VPS, quindi

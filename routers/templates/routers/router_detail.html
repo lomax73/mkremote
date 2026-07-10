@@ -11,7 +11,7 @@
     <tr><th>Note</th><td>{{ router.note|linebreaksbr|default:"—" }}</td></tr>
     <tr><th>Modello hardware</th><td>{{ router.modello_hardware|default:"—" }}</td></tr>
     <tr><th>Versione RouterOS</th><td>{{ router.versione_routeros|default:"—" }}</td></tr>
-    <tr><th>IP pubblico / DDNS</th><td class="mono">{{ router.ip_pubblico_o_ddns }}</td></tr>
+    <tr><th>IP pubblico / DDNS</th><td class="mono">{{ router.ip_pubblico_o_ddns|default:"—" }}</td></tr>
     <tr><th>IP LAN</th><td class="mono">{{ router.ip_lan|default:"—" }}</td></tr>
     <tr><th>Porta SSH</th><td class="mono">{{ router.porta_ssh }}</td></tr>
     <tr><th>Porta API</th><td class="mono">{{ router.porta_api }}</td></tr>
