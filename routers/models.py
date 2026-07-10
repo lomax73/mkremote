@@ -67,3 +67,11 @@ class Router(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def intervallo_backup_ore(self):
+        """Intervallo di backup espresso in ore intere, per un form più intuitivo del
+        formato durata di Django (es. '1 00:00:00')."""
+        if not self.intervallo_backup:
+            return None
+        return round(self.intervallo_backup.total_seconds() / 3600)

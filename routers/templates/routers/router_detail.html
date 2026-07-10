@@ -22,7 +22,7 @@
     </td></tr>
     <tr><th>IP VPN</th><td class="mono">{{ router.ip_vpn|default:"—" }}</td></tr>
     <tr><th>Chiave pubblica WireGuard</th><td class="mono">{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
-    <tr><th>Intervallo backup</th><td>{{ router.intervallo_backup|default:"—" }}</td></tr>
+    <tr><th>Intervallo backup</th><td>{% if router.intervallo_backup_ore %}Ogni {{ router.intervallo_backup_ore }} ore{% else %}— solo backup manuali{% endif %}</td></tr>
     <tr>
         <th>Ultimo backup</th>
         <td>
