@@ -40,8 +40,8 @@ lista dei router.
      quanto hai appena digitato prima di salvare — un secondo click la
      nasconde di nuovo. Per recuperare la password già salvata di un router
      esistente, vedi il punto successivo.
-   - **Intervallo backup (ore)**: ogni quante ore eseguire il backup
-     automatico (es. `24` per uno al giorno, `168` per uno a settimana). Se
+   - **Intervallo backup (giorni)**: ogni quanti giorni eseguire il backup
+     automatico (es. `1` per uno al giorno, `7` per uno a settimana). Se
      lasciato vuoto, restano solo i backup manuali.
    - **Numero backup da conservare**: quanti backup recenti tenere per questo
      router (i più vecchi vengono eliminati automaticamente).

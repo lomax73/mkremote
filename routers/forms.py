@@ -12,11 +12,11 @@ class RouterForm(forms.ModelForm):
         required=False,
         help_text='Lascia vuoto per non modificare la password esistente.',
     )
-    intervallo_backup_ore = forms.IntegerField(
-        label='Intervallo backup (ore)',
+    intervallo_backup_giorni = forms.IntegerField(
+        label='Intervallo backup (giorni)',
         min_value=1,
         required=False,
-        help_text='Ogni quante ore eseguire il backup automatico. Lascia vuoto per avere '
+        help_text='Ogni quanti giorni eseguire il backup automatico. Lascia vuoto per avere '
                    'solo backup manuali.',
     )
 
@@ -37,13 +37,13 @@ class RouterForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields['password'].required = True
         if self.instance.pk:
-            self.fields['intervallo_backup_ore'].initial = self.instance.intervallo_backup_ore
+            self.fields['intervallo_backup_giorni'].initial = self.instance.intervallo_backup_giorni
         self.order_fields([
             'nome', 'location', 'note',
             'modello_hardware', 'versione_routeros',
             'ip_pubblico_o_ddns', 'ip_lan', 'porta_ssh', 'porta_api',
             'username', 'password',
-            'intervallo_backup_ore', 'backup_retention_count',
+            'intervallo_backup_giorni', 'backup_retention_count',
         ])
 
     def save(self, commit=True):
@@ -51,8 +51,8 @@ class RouterForm(forms.ModelForm):
         new_password = self.cleaned_data.get('password')
         if new_password:
             router.password = new_password
-        ore = self.cleaned_data.get('intervallo_backup_ore')
-        router.intervallo_backup = timedelta(hours=ore) if ore else None
+        giorni = self.cleaned_data.get('intervallo_backup_giorni')
+        router.intervallo_backup = timedelta(days=giorni) if giorni else None
         if commit:
             router.save()
         return router
