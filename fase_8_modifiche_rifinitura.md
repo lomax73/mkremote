@@ -532,3 +532,32 @@ esplicita che con navigazione via).
   dai criteri di completamento della fase.
 - Stato: rimane `_esecuzione_da_finire` in attesa che l'utente applichi lo
   script su router-lab e confermi che SSH/API rispondono solo dalla VPN.
+
+### [Generale] Recupero password e rilevamento HW/FW router: primo tentativo errato, corretto dopo verifica in produzione
+- Contesto: richiesta di aggiungere sulla pagina router un campo IP LAN, un
+  pulsante occhio per recuperare la password se dimenticata, e un pulsante
+  che interroghi il router per compilare da sola modello hardware e versione
+  RouterOS, fungendo anche da test di connessione.
+- Primo tentativo (commit `dced76c`): pulsante occhio nel form di
+  creazione/modifica (inutile in modifica, dove il campo password è sempre
+  vuoto per non sovrascrivere quella esistente) e pulsante "Rileva
+  caratteristiche" che tentava la connessione API RouterOS dal server
+  dell'app verso l'IP LAN (o pubblico) inserito nel form, prima ancora di
+  salvare il router.
+- Verificato dall'utente in produzione: entrambe le funzionalità non
+  funzionavano. Causa: il server Django gira sul VPS di produzione, che non
+  ha alcuna rotta verso la rete LAN privata del router — il probe falliva
+  sempre con "connessione fallita", indipendentemente dai dati inseriti.
+- Correzione (commit `0b36f24`):
+  - Recupero password spostato su un pulsante 👁 nella **scheda di dettaglio**
+    del router (`RouterRevealPasswordView`), che decifra e mostra la password
+    già salvata — non più legato al form di modifica.
+  - Rilevamento caratteristiche spostato sulla pagina "Script VPN", accanto
+    a "Test connessione": si connette sull'**IP VPN** del router
+    (`fetch_router_hardware_info` in `vpn/connectivity.py`, stesso pattern di
+    `test_router_vpn_connection`), quindi funziona solo dopo che il tunnel
+    VPN è già attivo e verificato.
+  - Il campo **IP LAN** resta nel modello/form, ma allo stato attuale è solo
+    informativo (nessun probe lo usa); per un test reale via LAN servirebbe
+    un componente che gira sulla rete locale del router, non implementato.
+- Stato: risolto e verificato dall'utente in produzione.
