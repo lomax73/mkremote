@@ -14,4 +14,5 @@ urlpatterns = [
     path('', include('backups.urls')),
     path('', include('terminal.urls')),
     path('', include('monitoring.urls')),
+    path('api/internal/', include('accounts.urls')),
 ]

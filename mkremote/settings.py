@@ -40,6 +40,12 @@ ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,12
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 MASTER_ENCRYPTION_KEY = os.environ.get('MASTER_ENCRYPTION_KEY')
 
+# Token condiviso per la API interna di gestione utenti (accounts/), usata
+# dal Portale per creare/modificare/eliminare account da remoto. L'endpoint
+# è raggiungibile solo da localhost (regola Nginx), il token è una difesa
+# aggiuntiva. Generarlo con: python -c "import secrets; print(secrets.token_urlsafe(32))"
+INTERNAL_API_TOKEN = os.environ.get('INTERNAL_API_TOKEN', '')
+
 # Pianificazione subnet VPN WireGuard hub-and-spoke (vedi Fase 0 / Fase 2).
 # Configurabile da env, mai hardcoded altrove nel codice.
 VPN_SUBNET_CIDR = os.environ.get('VPN_SUBNET_CIDR', '10.10.0.0/24')
