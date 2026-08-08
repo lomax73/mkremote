@@ -30,4 +30,17 @@ Testato dal vivo su due router in produzione:
 - **Camping del sole**: VPN chiaramente instabile verso questo sito. Prima del fix, il download SFTP restava bloccato **a tempo indeterminato** (osservato: worker Celery fermo per minuti sulla stessa riga di log, nessun errore, nessun timeout). Dopo il fix: sia binario sia export falliscono in modo **pulito e prevedibile** (esattamente ~90s per tentativo × 3 tentativi = ~5 minuti totali), con un errore chiaro nel log invece di un blocco silenzioso.
 
 ### Per chi riprende questo progetto
-Il problema di fondo per "Camping del sole" (rete/VPN instabile verso quel sito, il file si genera sempre correttamente sul router ma il trasferimento SFTP non completa mai) **non è risolto** — non è un bug del software, è un problema di connettività di quel sito specifico. Ora però è diagnosticabile: chi indaga vede subito nel log che fallisce sempre allo stesso punto (SFTP, non l'API), il che restringe la causa a instabilità di rete/MTU sulla VPN verso quel router, non a un problema di RouterOS o di storage. Nessuna nota FBOFlag aperta su MKRemote al momento.
+Il problema di fondo per "Camping del sole" (rete/VPN instabile verso quel sito, il file si genera sempre correttamente sul router ma il trasferimento SFTP non completa mai) **non è risolto** — non è un bug del software, è un problema di connettività di quel sito specifico. Ora però è diagnosticabile: chi indaga vede subito nel log che fallisce sempre allo stesso punto (SFTP, non l'API), il che restringe la causa a instabilità di rete/MTU sulla VPN verso quel router, non a un problema di RouterOS o di storage.
+
+## 2026-08-08 — seguito: icona elimina backup, diagnostica, fix firewall, WebFig
+
+### Aggiunte dirette (richieste dall'utente, non da FBOFlag)
+- Icona 🗑️ per eliminare un backup dalla lista (elimina file su storage se presente + record). `backups/views.py`, `backups/urls.py`, `backups/templates/backups/backup_list.html`.
+- Pulsante "📡 Test connessione" nella scheda router: ping + test porte SSH/API, per distinguere un problema di rete generale da una porta/servizio specifico non raggiungibile. Nuovo modulo `routers/diagnostics.py`.
+- **Bug corretto in `vpn/scripts.py`** (trovato dall'utente applicando lo script su Ufficio_FBO): `generate_firewall_lockdown_script` usava `place-before=0..5` a indici fissi, assumendo un firewall vuoto — RouterOS rifiuta un `place-before` oltre la lunghezza attuale della lista, quindi lo script falliva a metà ("no such item") a seconda di quante regole erano già presenti. Rimosso `place-before`: le regole vengono ora aggiunte in fondo alla chain, sufficiente perché lo script le scrive già nell'ordine corretto (accept-VPN prima, drop-generali dopo).
+
+### Segnalazioni FBOFlag
+- [Conclusa] "webfig non funziona" (pagina `/router/8/`) — causa: il pulsante WebFig era un link diretto del browser a `http://{ip_vpn}/`, un IP privato della subnet WireGuard (10.10.0.0/24) raggiungibile solo dall'interfaccia VPN della VPS. Il browser dell'utente non ha alcuna rotta verso quella subnet — il link non ha **mai** potuto funzionare per un utilizzo reale, indipendentemente dal blocco firewall appena applicato su quel router (coincidenza di tempistiche, non causa). Per farlo funzionare servirebbe un proxy server-side (la VPS ha accesso alla VPN, il browser no) — l'utente ha scelto di rimuovere il pulsante per ora invece di costruire il proxy. File: `routers/templates/routers/router_detail.html`.
+
+### Per chi riprende questo progetto
+Se si vuole recuperare WebFig, serve una vista Django che faccia da reverse proxy autenticato verso `http://{router.ip_vpn}/` (la VPS ha accesso alla VPN, il client no) — non un semplice link `<a href>`. Nessuna nota FBOFlag aperta su MKRemote al momento.
