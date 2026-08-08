@@ -58,7 +58,6 @@
     <a class="btn" href="{% url 'backup-list' router.pk %}">Backup</a>
     {% if router.ip_vpn %}
     <a class="btn" href="{% url 'router-terminal' router.pk %}">Terminale</a>
-    <a class="btn" href="http://{{ router.ip_vpn }}/" target="_blank" rel="noopener">WebFig</a>
     <button class="btn" type="button" id="btn-diagnostica">📡 Test connessione</button>
     {% endif %}
     <a class="btn" href="{% url 'monitoring-router-detail' router.pk %}">Monitoraggio</a>
