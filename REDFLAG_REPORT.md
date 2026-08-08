@@ -14,3 +14,20 @@ Nessun problema evidente in una prima occhiata (indagine più approfondita fatta
 
 ### Per chi riprende questo progetto
 Resta aperta la nota #19 (approvata, non implementata): quando si affronta, il cambio è nel file `deploy/` + `/etc/systemd/system/mkremote-web.service` sulla VPS — sostituire `daphne -u /run/mkremote/daphne.sock mkremote.asgi:application` con `gunicorn mkremote.asgi:application -k uvicorn.workers.UvicornWorker --bind unix:/run/mkremote/daphne.sock --workers 3` (o simile), poi verificare che sia le pagine normali sia il terminale SSH via WebSocket (Channels) continuino a funzionare con più worker attivi.
+
+## 2026-08-08 — richiesta diretta dell'utente: "molti backup falliscono ma non capisco perché"
+
+### Cosa è stato fatto
+1. **Log dal vivo per i backup** (`backups/models.py` — nuovo modello `BackupRun`; `backups/tasks.py`, `backups/views.py`, `backups/urls.py`, nuovo template `backup_run_detail.html`, migrazione `0004`). "Backup manuale ora" ora porta a una pagina di log che si aggiorna da sola passo passo (connessione API, generazione file, download SFTP, upload storage), invece di un messaggio generico "controlla lo storico". Aggiunto anche un elenco delle esecuzioni recenti con link al log di ciascuna nella pagina backup del router.
+2. **Il log ha subito rivelato due cause concrete** dei fallimenti, indagate e corrette nello stesso `backups/tasks.py`:
+   - **Timeout API troppo stretto**: `librouteros.connect()` usava il default di 10s. Il comando `/export` su router con configurazioni corpose può metterci di più, causando "timed out" anche a router funzionante. Alzato a `API_TIMEOUT_SECONDS = 60`.
+   - **Nessun timeout sul download SFTP** (`asyncssh`): su una VPN instabile la connessione poteva restare bloccata **a tempo indeterminato**, occupando un worker Celery per sempre. Aggiunto `SFTP_TIMEOUT_SECONDS = 90` via `asyncio.wait_for`.
+   - Aggiunto anche un **ritentativo automatico** (3 tentativi, pausa 5s) per errori di connessione/SFTP — non per errori di configurazione (es. storage non configurato), dove ritentare non ha senso.
+
+### Verifica reale
+Testato dal vivo su due router in produzione:
+- **AP_Casa_Lomax**: backup binario riuscito, export in timeout — primo indizio del bug del timeout a 10s.
+- **Camping del sole**: VPN chiaramente instabile verso questo sito. Prima del fix, il download SFTP restava bloccato **a tempo indeterminato** (osservato: worker Celery fermo per minuti sulla stessa riga di log, nessun errore, nessun timeout). Dopo il fix: sia binario sia export falliscono in modo **pulito e prevedibile** (esattamente ~90s per tentativo × 3 tentativi = ~5 minuti totali), con un errore chiaro nel log invece di un blocco silenzioso.
+
+### Per chi riprende questo progetto
+Il problema di fondo per "Camping del sole" (rete/VPN instabile verso quel sito, il file si genera sempre correttamente sul router ma il trasferimento SFTP non completa mai) **non è risolto** — non è un bug del software, è un problema di connettività di quel sito specifico. Ora però è diagnosticabile: chi indaga vede subito nel log che fallisce sempre allo stesso punto (SFTP, non l'API), il che restringe la causa a instabilità di rete/MTU sulla VPN verso quel router, non a un problema di RouterOS o di storage. Nessuna nota FBOFlag aperta su MKRemote al momento.
