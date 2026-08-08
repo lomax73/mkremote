@@ -59,11 +59,14 @@ def generate_firewall_lockdown_script(router) -> str:
     """Genera lo script RouterOS (.rsc) per bloccare l'esposizione pubblica di
     SSH/API/WebFig, lasciandoli raggiungibili solo dalla subnet VPN (Fase 3).
 
-    Le regole vengono inserite in cima alla chain input con `place-before`
-    crescente (0, 1, 2, ...): ogni nuova regola sfila in quella posizione
-    esatta, quindi l'ordine finale rispecchia l'ordine testuale dello script
-    (prima gli accept dalla VPN, poi i drop generali) senza toccare o
-    riordinare le regole già presenti sul router."""
+    Le regole vengono semplicemente aggiunte in coda alla chain input, senza
+    `place-before`: RouterOS valuta le regole nell'ordine in cui compaiono,
+    quindi bastano gli accept-dalla-VPN prima e i drop-generali dopo (stesso
+    ordine del testo dello script) per ottenere il comportamento voluto.
+    Niente indici di posizione hardcoded — con `place-before=N` a numero
+    fisso lo script falliva con "no such item" a seconda di quante regole
+    erano già presenti sul router (il numero di regole già esistenti sfasa
+    tutte le posizioni successive)."""
     if not router.ip_vpn:
         raise ValueError('Il router non ha ancora un ip_vpn assegnato: completa prima la Fase 2.')
 
@@ -74,28 +77,34 @@ def generate_firewall_lockdown_script(router) -> str:
 # (tunnel VPN già verificato con successo). Tieni aperta una sessione
 # WinBox/SSH separata come rete di sicurezza mentre lo applichi: se qualcosa
 # va storto potresti perdere l'accesso remoto al router.
+#
+# Le regole vengono aggiunte in fondo alla chain input (nessun place-before):
+# se sul router esiste già una regola che accetta esplicitamente queste
+# porte da altre sorgenti PRIMA di queste, quella regola avrebbe comunque
+# precedenza — controlla `/ip firewall filter print` prima di applicare se
+# hai dubbi su regole personalizzate già presenti.
 
 # 1) Accetta SSH/API/WebFig SOLO dalla subnet VPN (valutate per prime).
 /ip firewall filter add chain=input action=accept protocol=tcp dst-port={router.porta_ssh} \\
-    src-address={settings.VPN_SUBNET_CIDR} place-before=0 comment="MKRemote: consenti SSH da VPN"
+    src-address={settings.VPN_SUBNET_CIDR} comment="MKRemote: consenti SSH da VPN"
 /ip firewall filter add chain=input action=accept protocol=tcp dst-port={router.porta_api} \\
-    src-address={settings.VPN_SUBNET_CIDR} place-before=1 comment="MKRemote: consenti API da VPN"
+    src-address={settings.VPN_SUBNET_CIDR} comment="MKRemote: consenti API da VPN"
 /ip firewall filter add chain=input action=accept protocol=tcp dst-port=80,443 \\
-    src-address={settings.VPN_SUBNET_CIDR} place-before=2 comment="MKRemote: consenti WebFig da VPN"
+    src-address={settings.VPN_SUBNET_CIDR} comment="MKRemote: consenti WebFig da VPN"
 
 # 2) Droppa le stesse porte da qualunque altra sorgente (arrivano dopo gli
 #    accept di cui sopra, quindi non bloccano il traffico VPN).
 /ip firewall filter add chain=input action=drop protocol=tcp dst-port={router.porta_ssh} \\
-    place-before=3 comment="MKRemote: blocca SSH pubblico"
+    comment="MKRemote: blocca SSH pubblico"
 /ip firewall filter add chain=input action=drop protocol=tcp dst-port={router.porta_api} \\
-    place-before=4 comment="MKRemote: blocca API pubblico"
+    comment="MKRemote: blocca API pubblico"
 /ip firewall filter add chain=input action=drop protocol=tcp dst-port=80,443 \\
-    place-before=5 comment="MKRemote: blocca WebFig pubblico"
+    comment="MKRemote: blocca WebFig pubblico"
 
-# Non tocca nessun'altra regola firewall già presente: solo aggiunte in cima.
-# Dopo aver verificato che SSH/API/WebFig non rispondono più sull'IP
-# pubblico ma continuano a rispondere su {router.ip_vpn}, torna nell'app e
-# premi "Conferma blocco applicato".
+# Non tocca né riordina nessuna regola firewall già presente: solo aggiunte
+# in fondo alla lista. Dopo aver verificato che SSH/API/WebFig non
+# rispondono più sull'IP pubblico ma continuano a rispondere su
+# {router.ip_vpn}, torna nell'app e premi "Conferma blocco applicato".
 """
 
 
