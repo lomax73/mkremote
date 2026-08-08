@@ -8,7 +8,7 @@ from django.views.generic import DetailView, ListView
 from routers.models import Router
 
 from .models import Backup, BackupRun
-from .storage import ObjectStorageNotConfigured, download_backup_file
+from .storage import ObjectStorageNotConfigured, delete_backup_file, download_backup_file
 from .tasks import backup_router_task
 
 
@@ -85,3 +85,20 @@ class BackupDownloadView(LoginRequiredMixin, View):
         response = HttpResponse(content, content_type='application/octet-stream')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
+
+
+class BackupDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk, backup_id):
+        backup = get_object_or_404(Backup, pk=backup_id, router_id=pk)
+        if backup.storage_path:
+            try:
+                delete_backup_file(backup.storage_path)
+            except ObjectStorageNotConfigured as exc:
+                messages.error(request, str(exc))
+                return redirect('backup-list', pk=pk)
+            except Exception as exc:
+                messages.error(request, f'Impossibile eliminare il file dallo storage: {exc}')
+                return redirect('backup-list', pk=pk)
+        backup.delete()
+        messages.success(request, 'Backup eliminato.')
+        return redirect('backup-list', pk=pk)
