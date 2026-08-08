@@ -36,6 +36,9 @@
                 {% if backup.storage_path %}
                     <a href="{% url 'backup-download' router.pk backup.pk %}">Scarica</a>
                 {% endif %}
+                {% if backup.run_id %}
+                    {% if backup.storage_path %} · {% endif %}<a href="{% url 'backup-run-detail' router.pk backup.run_id %}">Log</a>
+                {% endif %}
             </td>
         </tr>
         {% empty %}
@@ -43,4 +46,22 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if run_recenti %}
+<h2 style="margin-top:2rem;">Log delle esecuzioni recenti</h2>
+<table>
+    <thead>
+        <tr><th>Avviato il</th><th>Stato</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for run in run_recenti %}
+        <tr>
+            <td>{{ run.avviato_il }}</td>
+            <td><span class="badge badge-{% if run.stato == 'in_corso' %}in_attesa_vpn{% else %}connesso{% endif %}">{{ run.get_stato_display }}</span></td>
+            <td><a href="{% url 'backup-run-detail' router.pk run.pk %}">Vedi log</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 {% endblock %}

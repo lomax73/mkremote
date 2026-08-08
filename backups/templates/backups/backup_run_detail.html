@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Log backup — {{ run.router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'backup-list' run.router.pk %}">&larr; Backup — {{ run.router.nome }}</a></p>
+<h1>Log backup — {{ run.router.nome }}
+    <span id="stato-badge" class="badge badge-{% if run.stato == 'in_corso' %}in_attesa_vpn{% else %}connesso{% endif %}">{{ run.get_stato_display }}</span>
+</h1>
+
+<pre id="log-box" style="background:#0f172a; color:#d1d5db; padding:1rem; border-radius:8px; font-family:monospace; font-size:0.85rem; white-space:pre-wrap; min-height:200px; max-height:60vh; overflow-y:auto;">{{ run.log }}</pre>
+
+<script>
+const routerId = {{ run.router.pk }};
+const runId = {{ run.pk }};
+const statoIniziale = "{{ run.stato }}";
+const logBox = document.getElementById('log-box');
+const badge = document.getElementById('stato-badge');
+
+async function poll() {
+    const res = await fetch(`/router/${routerId}/backup/log/${runId}/stato/`);
+    const data = await res.json();
+    logBox.textContent = data.log;
+    logBox.scrollTop = logBox.scrollHeight;
+    badge.textContent = data.stato === 'in_corso' ? 'In corso' : 'Completato';
+    badge.className = 'badge badge-' + (data.stato === 'in_corso' ? 'in_attesa_vpn' : 'connesso');
+    if (data.stato === 'in_corso') {
+        setTimeout(poll, 1500);
+    }
+}
+if (statoIniziale === 'in_corso') {
+    poll();
+}
+</script>
+{% endblock %}
