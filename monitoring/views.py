@@ -1,8 +1,13 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
 from routers.models import Router
@@ -67,3 +72,17 @@ class AlertSettingsView(LoginRequiredMixin, View):
             messages.success(request, 'Impostazioni di alert aggiornate.')
             return redirect('monitoring-settings')
         return render(request, self.template_name, {'form': form})
+
+
+@login_required
+@require_POST
+def alert_reset(request, pk):
+    alert = get_object_or_404(AlertEvent, pk=pk)
+    alert.stato = AlertEvent.Stato.CHIUSO
+    alert.chiuso_il = timezone.now()
+    alert.save(update_fields=['stato', 'chiuso_il'])
+    messages.success(request, f'Alert "{alert.get_tipo_display()}" su {alert.router.nome} chiuso.')
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(referer)
+    return redirect('monitoring-dashboard')

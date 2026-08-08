@@ -7,4 +7,5 @@ urlpatterns = [
     path('monitoraggio/impostazioni/', views.AlertSettingsView.as_view(), name='monitoring-settings'),
     path('monitoraggio/router/<int:pk>/', views.RouterMonitorDetailView.as_view(), name='monitoring-router-detail'),
     path('monitoraggio/router/<int:pk>/dati.json', views.RouterMetricsDataView.as_view(), name='monitoring-router-data'),
+    path('monitoraggio/alert/<int:pk>/reset/', views.alert_reset, name='monitoring-alert-reset'),
 ]

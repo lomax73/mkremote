@@ -8,7 +8,7 @@
 <h2>Alert aperti</h2>
 <table style="margin-bottom:1.5rem;">
     <thead>
-        <tr><th>Router</th><th>Tipo</th><th>Messaggio</th><th>Aperto il</th></tr>
+        <tr><th>Router</th><th>Tipo</th><th>Messaggio</th><th>Aperto il</th><th></th></tr>
     </thead>
     <tbody>
         {% for alert in alert_aperti %}
@@ -17,6 +17,12 @@
             <td><span class="badge badge-offline">{{ alert.get_tipo_display }}</span></td>
             <td>{{ alert.messaggio }}</td>
             <td>{{ alert.aperto_il }}</td>
+            <td>
+                <form method="post" action="{% url 'monitoring-alert-reset' alert.pk %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="padding:0.25rem 0.6rem; font-size:0.85rem;">Reset</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

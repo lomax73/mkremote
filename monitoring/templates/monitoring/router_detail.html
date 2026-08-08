@@ -13,7 +13,7 @@
 <h2>Alert recenti</h2>
 <table>
     <thead>
-        <tr><th>Tipo</th><th>Stato</th><th>Messaggio</th><th>Aperto il</th><th>Chiuso il</th></tr>
+        <tr><th>Tipo</th><th>Stato</th><th>Messaggio</th><th>Aperto il</th><th>Chiuso il</th><th></th></tr>
     </thead>
     <tbody>
         {% for alert in alert_router %}
@@ -23,9 +23,17 @@
             <td>{{ alert.messaggio }}</td>
             <td>{{ alert.aperto_il }}</td>
             <td>{{ alert.chiuso_il|default:"—" }}</td>
+            <td>
+                {% if alert.stato == 'aperto' %}
+                <form method="post" action="{% url 'monitoring-alert-reset' alert.pk %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="padding:0.25rem 0.6rem; font-size:0.85rem;">Reset</button>
+                </form>
+                {% endif %}
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">Nessun alert registrato.</td></tr>
+        <tr><td colspan="6">Nessun alert registrato.</td></tr>
         {% endfor %}
     </tbody>
 </table>
