@@ -12,6 +12,23 @@ from .storage import ObjectStorageNotConfigured, download_backup_file
 from .tasks import backup_router_task
 
 
+class BackupOverviewView(LoginRequiredMixin, ListView):
+    """Elenco router con link diretto ai backup di ciascuno, raggiungibile
+    dalla sidebar — la pagina backup vera e propria è per singolo router."""
+    model = Router
+    template_name = 'backups/backup_overview.html'
+    context_object_name = 'routers'
+
+    def get_queryset(self):
+        return Router.objects.all().order_by('nome')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for router in context['routers']:
+            router.ultimo_backup = router.backups.order_by('-creato_il').first()
+        return context
+
+
 class BackupListView(LoginRequiredMixin, ListView):
     model = Backup
     template_name = 'backups/backup_list.html'

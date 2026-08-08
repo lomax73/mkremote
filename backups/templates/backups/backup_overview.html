@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Backup — MKRemote{% endblock %}
+{% block content %}
+<h1>Backup</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Router</th>
+            <th>Ultimo backup</th>
+            <th>Esito</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for router in routers %}
+        <tr>
+            <td>{{ router.nome }}</td>
+            <td>{{ router.ultimo_backup.creato_il|default:"mai eseguito" }}</td>
+            <td>
+                {% if router.ultimo_backup %}
+                    {% if router.ultimo_backup.esito == 'riuscito' %}
+                        <span class="badge badge-connesso">Riuscito</span>
+                    {% else %}
+                        <span class="badge badge-offline" title="{{ router.ultimo_backup.errore }}">Fallito</span>
+                    {% endif %}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td><a href="{% url 'backup-list' router.pk %}">Vedi backup</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Nessun router registrato.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
