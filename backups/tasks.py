@@ -1,6 +1,7 @@
 import asyncio
 import os
 import tempfile
+import time
 from datetime import datetime, timezone
 
 import asyncssh
@@ -16,6 +17,12 @@ from routers.models import Router
 
 from .models import Backup, BackupRun
 from .storage import ObjectStorageNotConfigured, upload_backup_file
+
+
+API_TIMEOUT_SECONDS = 60  # /export su router con configurazioni corpose può metterci più dei 10s di default
+SFTP_TIMEOUT_SECONDS = 90  # senza timeout esplicito una VPN instabile può far restare la connessione appesa a tempo indeterminato
+MAX_TENTATIVI = 3
+RITENTA_DOPO_SECONDI = 5
 
 
 def _timestamp() -> str:
@@ -48,6 +55,7 @@ def _generate_remote_file(router: Router, tipo: str, basename: str) -> str:
         username=router.username,
         password=router.password,
         port=router.porta_api,
+        timeout=API_TIMEOUT_SECONDS,
     )
     try:
         if tipo == Backup.Tipo.BINARIO:
@@ -61,34 +69,59 @@ def _generate_remote_file(router: Router, tipo: str, basename: str) -> str:
         api.close()
 
 
-def _run_backup_one(router: Router, tipo: str, run_id: int) -> None:
-    label = 'binario' if tipo == Backup.Tipo.BINARIO else 'export'
+def _tenta_backup_una_volta(router: Router, tipo: str, label: str, run_id: int) -> tuple[str, int]:
+    """Un singolo tentativo: genera il file sul router e lo scarica. Ritorna
+    (storage_path, dimensione_bytes) o solleva un'eccezione."""
     basename = f'{router.nome}_{_timestamp()}'
     _log(run_id, f'Backup {label}: connessione all\'API RouterOS di {router.nome} ({router.ip_vpn}:{router.porta_api})...')
-    try:
-        remote_filename = _generate_remote_file(router, tipo, basename)
-        _log(run_id, f'Backup {label}: file generato sul router ({remote_filename}). Scaricamento via SFTP...')
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            local_path = os.path.join(tmp_dir, remote_filename)
-            asyncio.run(_download_and_remove(router, remote_filename, local_path))
-            size = os.path.getsize(local_path)
-            _log(run_id, f'Backup {label}: scaricato ({size} byte). Caricamento sullo storage...')
-            storage_path = upload_backup_file(local_path, router.nome, remote_filename)
-    except ObjectStorageNotConfigured as exc:
-        _log(run_id, f'Backup {label}: ERRORE — storage non configurato: {exc}')
-        Backup.objects.create(router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
-        open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
-    except Exception as exc:  # connessione router, SFTP, backup RouterOS falliti, ecc.
-        _log(run_id, f'Backup {label}: ERRORE — {exc}')
-        Backup.objects.create(router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
-        open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
-    else:
-        _log(run_id, f'Backup {label}: completato con successo ({size} byte caricati).')
-        Backup.objects.create(
-            router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.RIUSCITO,
-            storage_path=storage_path, dimensione_bytes=size,
-        )
-        close_alert(router, AlertEvent.Tipo.BACKUP_FALLITO)
+    remote_filename = _generate_remote_file(router, tipo, basename)
+    _log(run_id, f'Backup {label}: file generato sul router ({remote_filename}). Scaricamento via SFTP...')
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        local_path = os.path.join(tmp_dir, remote_filename)
+        try:
+            asyncio.run(asyncio.wait_for(
+                _download_and_remove(router, remote_filename, local_path), timeout=SFTP_TIMEOUT_SECONDS,
+            ))
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(
+                f'connessione SSH/SFTP bloccata oltre {SFTP_TIMEOUT_SECONDS}s (probabile VPN instabile verso questo router)'
+            ) from exc
+        size = os.path.getsize(local_path)
+        _log(run_id, f'Backup {label}: scaricato ({size} byte). Caricamento sullo storage...')
+        storage_path = upload_backup_file(local_path, router.nome, remote_filename)
+    return storage_path, size
+
+
+def _run_backup_one(router: Router, tipo: str, run_id: int) -> None:
+    label = 'binario' if tipo == Backup.Tipo.BINARIO else 'export'
+
+    for tentativo in range(1, MAX_TENTATIVI + 1):
+        try:
+            storage_path, size = _tenta_backup_una_volta(router, tipo, label, run_id)
+        except ObjectStorageNotConfigured as exc:
+            # non ha senso ritentare: la configurazione manca, non è un problema transitorio
+            _log(run_id, f'Backup {label}: ERRORE — storage non configurato: {exc}')
+            Backup.objects.create(router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
+            open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
+            return
+        except Exception as exc:  # connessione router, SFTP, backup RouterOS falliti, ecc.
+            if tentativo < MAX_TENTATIVI:
+                _log(run_id, f'Backup {label}: tentativo {tentativo}/{MAX_TENTATIVI} fallito ({exc}), riprovo tra {RITENTA_DOPO_SECONDI}s...')
+                time.sleep(RITENTA_DOPO_SECONDI)
+                continue
+            _log(run_id, f'Backup {label}: ERRORE dopo {MAX_TENTATIVI} tentativi — {exc}')
+            Backup.objects.create(router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.FALLITO, errore=str(exc))
+            open_or_get_alert(router, AlertEvent.Tipo.BACKUP_FALLITO, str(exc))
+            return
+        else:
+            _log(run_id, f'Backup {label}: completato con successo ({size} byte caricati)'
+                          + (f', al tentativo {tentativo}' if tentativo > 1 else '') + '.')
+            Backup.objects.create(
+                router=router, run_id=run_id, tipo=tipo, esito=Backup.Esito.RIUSCITO,
+                storage_path=storage_path, dimensione_bytes=size,
+            )
+            close_alert(router, AlertEvent.Tipo.BACKUP_FALLITO)
+            return
 
 
 @shared_task
