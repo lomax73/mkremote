@@ -8,5 +8,6 @@ urlpatterns = [
     path('router/<int:pk>/', views.RouterDetailView.as_view(), name='router-detail'),
     path('router/<int:pk>/modifica/', views.RouterUpdateView.as_view(), name='router-update'),
     path('router/<int:pk>/password/', views.RouterRevealPasswordView.as_view(), name='router-reveal-password'),
+    path('router/<int:pk>/diagnostica/', views.RouterDiagnosticaView.as_view(), name='router-diagnostica'),
     path('router/<int:pk>/elimina/', views.RouterDeleteView.as_view(), name='router-delete'),
 ]

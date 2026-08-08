@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
+from . import diagnostics
 from .forms import RouterForm
 from .models import Router
 
@@ -55,3 +56,16 @@ class RouterRevealPasswordView(LoginRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         return JsonResponse({'password': router.password})
+
+
+class RouterDiagnosticaView(LoginRequiredMixin, View):
+    """Test rapido di connettività (ping + porte SSH/API) verso l'IP VPN del
+    router — per distinguere un problema di rete (pacchetti persi) da un
+    servizio non raggiungibile (porta chiusa/rifiutata)."""
+
+    def post(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        if not router.ip_vpn:
+            return JsonResponse({'errore': 'Questo router non ha un IP VPN configurato.'}, status=400)
+        risultati = diagnostics.esegui_diagnostica(router.ip_vpn, router.porta_ssh, router.porta_api)
+        return JsonResponse(risultati)

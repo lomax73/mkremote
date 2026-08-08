@@ -59,6 +59,7 @@
     {% if router.ip_vpn %}
     <a class="btn" href="{% url 'router-terminal' router.pk %}">Terminale</a>
     <a class="btn" href="http://{{ router.ip_vpn }}/" target="_blank" rel="noopener">WebFig</a>
+    <button class="btn" type="button" id="btn-diagnostica">📡 Test connessione</button>
     {% endif %}
     <a class="btn" href="{% url 'monitoring-router-detail' router.pk %}">Monitoraggio</a>
     {% if router.stato_connessione == 'connesso' %}
@@ -66,6 +67,9 @@
     {% endif %}
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
+
+<div id="diagnostica-box" hidden style="background:#0f172a; color:#d1d5db; padding:1rem; border-radius:8px; font-family:monospace; font-size:0.85rem; white-space:pre-wrap; margin-bottom:1.5rem;"></div>
+
 <script>
 (function () {
     function getCookie(name) {
@@ -110,6 +114,51 @@
                 btn.disabled = false;
             });
     });
+
+    var btnDiag = document.getElementById('btn-diagnostica');
+    var boxDiag = document.getElementById('diagnostica-box');
+    if (btnDiag) {
+        btnDiag.addEventListener('click', function () {
+            btnDiag.disabled = true;
+            btnDiag.textContent = 'Test in corso...';
+            boxDiag.hidden = false;
+            boxDiag.textContent = 'Ping e test porte in corso, un momento...';
+            fetch('{% url "router-diagnostica" router.pk %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.errore) {
+                        boxDiag.textContent = 'Errore: ' + data.errore;
+                        return;
+                    }
+                    var righe = [];
+                    righe.push('PING (' + '4 pacchetti' + '):');
+                    if (data.ping.perdita_percento !== null) {
+                        righe.push('  Perdita pacchetti: ' + data.ping.perdita_percento + '%');
+                        righe.push('  RTT medio: ' + (data.ping.rtt_medio_ms !== null ? data.ping.rtt_medio_ms + ' ms' : '—'));
+                    } else {
+                        righe.push('  ' + data.ping.output);
+                    }
+                    righe.push('');
+                    righe.push('PORTA SSH (' + '{{ router.porta_ssh }}' + '): ' + (data.ssh.aperta
+                        ? 'aperta (' + data.ssh.tempo_ms + ' ms)'
+                        : 'NON raggiungibile — ' + data.ssh.errore + ' (' + data.ssh.tempo_ms + ' ms)'));
+                    righe.push('PORTA API (' + '{{ router.porta_api }}' + '): ' + (data.api.aperta
+                        ? 'aperta (' + data.api.tempo_ms + ' ms)'
+                        : 'NON raggiungibile — ' + data.api.errore + ' (' + data.api.tempo_ms + ' ms)'));
+                    boxDiag.textContent = righe.join('\n');
+                })
+                .catch(function () {
+                    boxDiag.textContent = 'Errore durante il test.';
+                })
+                .finally(function () {
+                    btnDiag.disabled = false;
+                    btnDiag.textContent = '📡 Test connessione';
+                });
+        });
+    }
 })();
 </script>
 {% endblock %}
