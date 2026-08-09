@@ -35,13 +35,13 @@ def generate_wireguard_setup_script(router) -> str:
 
 # Crea l'interfaccia WireGuard e genera la coppia di chiavi direttamente qui:
 # la chiave privata resta sul router, non viene mai trasmessa altrove.
-/interface wireguard add name=wireguard1 listen-port=51820 comment="MKRemote hub tunnel"
+/interface wireguard add name=wireguard-mkremote listen-port=51820 comment="MKRemote hub tunnel"
 
 # Assegna l'IP privato riservato a questo router nella subnet VPN.
-/ip address add address={router.ip_vpn}/{prefixlen} interface=wireguard1 comment="MKRemote VPN IP"
+/ip address add address={router.ip_vpn}/{prefixlen} interface=wireguard-mkremote comment="MKRemote VPN IP"
 
 # Configura il peer verso il VPS hub (chiave pubblica del server, fissa).
-/interface wireguard peers add interface=wireguard1 \\
+/interface wireguard peers add interface=wireguard-mkremote \\
     public-key="{settings.VPN_HUB_PUBLIC_KEY}" \\
     endpoint-address={settings.VPN_HUB_PUBLIC_ENDPOINT} \\
     endpoint-port={settings.VPN_HUB_PUBLIC_PORT} \\
@@ -51,7 +51,7 @@ def generate_wireguard_setup_script(router) -> str:
 
 # Stampa la chiave pubblica generata: copiala nel campo "Chiave pubblica router"
 # nell'app e premi "Registra peer sul server".
-:put [/interface wireguard get [find name=wireguard1] public-key]
+:put [/interface wireguard get [find name=wireguard-mkremote] public-key]
 """
 
 
