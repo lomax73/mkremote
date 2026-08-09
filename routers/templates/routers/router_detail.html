@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ router.nome }} — MKRemote{% endblock %}
+{% block extra_head %}
+<style>
+    .btn-copia {
+        border: none; background: none; cursor: pointer;
+        font-size: 0.95rem; padding: 0.1rem 0.3rem; border-radius: 6px; vertical-align: middle;
+    }
+    .btn-copia:hover { background: var(--azure-tint); }
+</style>
+{% endblock %}
 {% block content %}
 <p><a href="{% url 'router-list' %}">&larr; Router</a></p>
 <h1>{{ router.nome }}
@@ -21,7 +30,12 @@
         <span id="password-value">••••••••</span>
         <button class="btn" type="button" id="btn-mostra-password">👁 Mostra password</button>
     </td></tr>
-    <tr><th>IP VPN</th><td class="mono">{{ router.ip_vpn|default:"—" }}</td></tr>
+    <tr><th>IP VPN</th><td class="mono">
+        {{ router.ip_vpn|default:"—" }}
+        {% if router.ip_vpn %}
+        <button type="button" class="btn-copia" id="btn-copia-ip-vpn" data-copia="{{ router.ip_vpn }}" title="Copia IP VPN" aria-label="Copia IP VPN">📋</button>
+        {% endif %}
+    </td></tr>
     <tr><th>Chiave pubblica WireGuard</th><td class="mono">{{ router.chiave_pubblica_wireguard|default:"—" }}</td></tr>
     <tr><th>Intervallo backup</th><td>{% if router.intervallo_backup_giorni %}Ogni {{ router.intervallo_backup_giorni }} giorni{% else %}— solo backup manuali{% endif %}</td></tr>
     <tr>
@@ -114,6 +128,17 @@
                 btn.disabled = false;
             });
     });
+
+    var btnCopiaIp = document.getElementById('btn-copia-ip-vpn');
+    if (btnCopiaIp) {
+        btnCopiaIp.addEventListener('click', function () {
+            navigator.clipboard.writeText(btnCopiaIp.dataset.copia).then(function () {
+                var originale = btnCopiaIp.textContent;
+                btnCopiaIp.textContent = '✅';
+                setTimeout(function () { btnCopiaIp.textContent = originale; }, 1200);
+            });
+        });
+    }
 
     var btnDiag = document.getElementById('btn-diagnostica');
     var boxDiag = document.getElementById('diagnostica-box');
