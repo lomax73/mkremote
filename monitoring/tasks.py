@@ -29,12 +29,23 @@ def _collect_metric(router: Router) -> RouterMetric:
     try:
         resource = next(iter(api.path('/system/resource')), {})
 
+        # Il nome del sensore in /system/health varia da modello a modello: i
+        # routerboard "classici" espongono "temperature", ma gli switch della
+        # serie CRS3xx (es. CRS326) espongono "cpu-temperature" — senza questo
+        # fallback la temperatura risultava sempre assente per quei modelli
+        # pur essendo visibile in WinBox.
         temperatura = None
         try:
+            sensori_temperatura = {}
             for entry in api.path('/system/health'):
-                if entry.get('name') == 'temperature':
-                    temperatura = int(float(entry['value']))
-                    break
+                nome = entry.get('name', '')
+                if nome == 'temperature' or nome.endswith('-temperature'):
+                    sensori_temperatura[nome] = entry.get('value')
+            valore = sensori_temperatura.get('temperature')
+            if valore is None and sensori_temperatura:
+                valore = next(iter(sensori_temperatura.values()))
+            if valore is not None:
+                temperatura = int(float(valore))
         except Exception:
             pass  # non tutti i modelli hanno sensori di health
 
