@@ -51,11 +51,17 @@ def _collect_metric(router: Router) -> RouterMetric:
         ram_libera = resource.get('free-memory')
         ram_usata = (ram_totale - ram_libera) if ram_totale is not None and ram_libera is not None else None
 
+        disco_totale = resource.get('total-hdd-space')
+        disco_libero = resource.get('free-hdd-space')
+        disco_usato = (disco_totale - disco_libero) if disco_totale is not None and disco_libero is not None else None
+
         return RouterMetric(
             router=router,
             cpu_load_percent=resource.get('cpu-load'),
             ram_usata_bytes=ram_usata,
             ram_totale_bytes=ram_totale,
+            disco_usato_bytes=disco_usato,
+            disco_totale_bytes=disco_totale,
             uptime_secondi=_parse_uptime(resource.get('uptime', '')),
             temperatura_celsius=temperatura,
             traffico_interfacce=traffico,

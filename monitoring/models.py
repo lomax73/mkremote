@@ -11,6 +11,8 @@ class RouterMetric(models.Model):
     cpu_load_percent = models.PositiveSmallIntegerField(null=True, blank=True)
     ram_usata_bytes = models.PositiveBigIntegerField(null=True, blank=True)
     ram_totale_bytes = models.PositiveBigIntegerField(null=True, blank=True)
+    disco_usato_bytes = models.PositiveBigIntegerField(null=True, blank=True)
+    disco_totale_bytes = models.PositiveBigIntegerField(null=True, blank=True)
     uptime_secondi = models.PositiveBigIntegerField(null=True, blank=True)
     temperatura_celsius = models.SmallIntegerField(null=True, blank=True)
 

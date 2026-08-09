@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Monitoraggio — MKRemote{% endblock %}
+{% block extra_head %}
+<style>
+    .col-compatta { font-size: 0.82rem; }
+</style>
+{% endblock %}
 {% block content %}
 <h1>Monitoraggio</h1>
 <p><a class="btn" href="{% url 'monitoring-settings' %}">Impostazioni alert</a></p>
@@ -35,10 +40,11 @@
         <tr>
             <th>Nome</th>
             <th>Stato</th>
-            <th>Ultimo check</th>
-            <th>CPU</th>
-            <th>RAM</th>
-            <th>Temperatura</th>
+            <th class="col-compatta">Ultimo check</th>
+            <th class="col-compatta">CPU</th>
+            <th class="col-compatta">RAM</th>
+            <th class="col-compatta">Disco</th>
+            <th class="col-compatta">Temperatura</th>
         </tr>
     </thead>
     <tbody>
@@ -46,14 +52,20 @@
         <tr>
             <td><a href="{% url 'monitoring-router-detail' router.pk %}">{{ router.nome }}</a></td>
             <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
-            <td>{{ router.ultima_metrica.rilevato_il|default:"—" }}</td>
-            <td>{% if router.ultima_metrica.cpu_load_percent is not None %}{{ router.ultima_metrica.cpu_load_percent }}%{% else %}—{% endif %}</td>
-            <td>
+            <td class="col-compatta">{{ router.ultima_metrica.rilevato_il|default:"—" }}</td>
+            <td class="col-compatta">{% if router.ultima_metrica.cpu_load_percent is not None %}{{ router.ultima_metrica.cpu_load_percent }}%{% else %}—{% endif %}</td>
+            <td class="col-compatta">
                 {% if router.ultima_metrica.ram_usata_bytes and router.ultima_metrica.ram_totale_bytes %}
                     {{ router.ultima_metrica.ram_usata_bytes|filesizeformat }} / {{ router.ultima_metrica.ram_totale_bytes|filesizeformat }}
                 {% else %}—{% endif %}
             </td>
-            <td>
+            <td class="col-compatta">
+                {% if router.ultima_metrica.disco_usato_bytes and router.ultima_metrica.disco_totale_bytes %}
+                    {% widthratio router.ultima_metrica.disco_usato_bytes router.ultima_metrica.disco_totale_bytes 100 %}%
+                    <span style="color:#94a3b8;">({{ router.ultima_metrica.disco_usato_bytes|filesizeformat }} / {{ router.ultima_metrica.disco_totale_bytes|filesizeformat }})</span>
+                {% else %}—{% endif %}
+            </td>
+            <td class="col-compatta">
                 {% if router.ultima_metrica.temperatura_celsius is not None %}
                     <span class="badge {% if router.ultima_metrica.temperatura_celsius >= soglia_temperatura %}badge-offline{% elif router.ultima_metrica.temperatura_celsius >= soglia_temperatura|add:"-15" %}badge-in_attesa_vpn{% else %}badge-connesso{% endif %}">
                         🌡 {{ router.ultima_metrica.temperatura_celsius }}°C
@@ -62,7 +74,7 @@
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6">Nessun router registrato.</td></tr>
+        <tr><td colspan="7">Nessun router registrato.</td></tr>
         {% endfor %}
     </tbody>
 </table>
