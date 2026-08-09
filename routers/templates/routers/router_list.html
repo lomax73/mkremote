@@ -2,6 +2,14 @@
 {% block title %}Router — MKRemote{% endblock %}
 {% block extra_head %}
 <style>
+    .vista-toggle { display: inline-flex; gap: 0.25rem; margin-left: 0.75rem; vertical-align: middle; }
+    .vista-toggle button {
+        border: 1px solid var(--border); background: #fff; color: var(--navy);
+        border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.85rem; font-weight: 600;
+        cursor: pointer; font-family: var(--font-body);
+    }
+    .vista-toggle button.active { background: var(--azure); color: #fff; border-color: var(--azure); }
+
     .cliente-sezione { margin-bottom: 1.75rem; }
     .cliente-sezione:last-child { margin-bottom: 0; }
     .cliente-titolo {
@@ -13,6 +21,8 @@
     .cliente-titolo .conteggio {
         font-family: var(--font-body); font-weight: 500; font-size: 0.8rem; color: #64748b;
     }
+
+    /* --- Vista ad albero --- */
     .albero-router { list-style: none; margin: 0; padding: 0 0 0 0.4rem; }
     .albero-router li {
         position: relative; padding: 0.5rem 0 0.5rem 1.4rem;
@@ -29,36 +39,110 @@
     .router-riga a { font-weight: 600; text-decoration: none; }
     .router-riga a:hover { text-decoration: underline; }
     .router-riga .location { color: #64748b; font-size: 0.88rem; }
+
+    /* --- Vista tabellare --- */
+    .cliente-sezione table { margin-top: 0; }
+
+    [data-vista-contenuto] { display: none; }
+    [data-vista-contenuto].vista-attiva { display: block; }
 </style>
 {% endblock %}
 {% block content %}
-<h1>Router</h1>
+<h1>Router
+    <span class="vista-toggle" role="group" aria-label="Tipo di visualizzazione">
+        <button type="button" data-vista-btn="albero">🌳 Albero</button>
+        <button type="button" data-vista-btn="tabella">📋 Tabella</button>
+    </span>
+</h1>
 <p><a class="btn" href="{% url 'router-create' %}">+ Nuovo router</a></p>
 
-{% for sezione in sezioni %}
-<div class="cliente-sezione">
-    <p class="cliente-titolo">
-        {% if sezione.cliente %}
-            🏢 {{ sezione.cliente }}
-        {% else %}
-            <span class="senza-cliente">Senza cliente</span>
-        {% endif %}
-        <span class="conteggio">({{ sezione.routers|length }})</span>
-    </p>
-    <ul class="albero-router">
-        {% for router in sezione.routers %}
-        <li>
-            <div class="router-riga">
-                <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>
-                {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
-                <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
-                <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
+<div data-vista-contenuto="albero">
+    {% for sezione in sezioni %}
+    <div class="cliente-sezione">
+        <p class="cliente-titolo">
+            {% if sezione.cliente %}
+                🏢 {{ sezione.cliente }}
+            {% else %}
+                <span class="senza-cliente">Senza cliente</span>
+            {% endif %}
+            <span class="conteggio">({{ sezione.routers|length }})</span>
+        </p>
+        <ul class="albero-router">
+            {% for router in sezione.routers %}
+            <li>
+                <div class="router-riga">
+                    <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>
+                    {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
+                    <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
+                    <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% empty %}
+    <p>Nessun router registrato.</p>
+    {% endfor %}
 </div>
-{% empty %}
-<p>Nessun router registrato.</p>
-{% endfor %}
+
+<div data-vista-contenuto="tabella">
+    {% for sezione in sezioni %}
+    <div class="cliente-sezione">
+        <p class="cliente-titolo">
+            {% if sezione.cliente %}
+                🏢 {{ sezione.cliente }}
+            {% else %}
+                <span class="senza-cliente">Senza cliente</span>
+            {% endif %}
+            <span class="conteggio">({{ sezione.routers|length }})</span>
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Location</th>
+                    <th>IP VPN</th>
+                    <th>Stato</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for router in sezione.routers %}
+                <tr>
+                    <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
+                    <td>{{ router.location }}</td>
+                    <td class="mono">{{ router.ip_vpn|default:"—" }}</td>
+                    <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% empty %}
+    <p>Nessun router registrato.</p>
+    {% endfor %}
+</div>
+
+<script>
+(function () {
+    var STORAGE_KEY = 'mkremote-router-vista';
+    var contenuti = document.querySelectorAll('[data-vista-contenuto]');
+    var bottoni = document.querySelectorAll('[data-vista-btn]');
+
+    function attiva(vista) {
+        contenuti.forEach(function (el) {
+            el.classList.toggle('vista-attiva', el.dataset.vistaContenuto === vista);
+        });
+        bottoni.forEach(function (btn) {
+            btn.classList.toggle('active', btn.dataset.vistaBtn === vista);
+        });
+        localStorage.setItem(STORAGE_KEY, vista);
+    }
+
+    bottoni.forEach(function (btn) {
+        btn.addEventListener('click', function () { attiva(btn.dataset.vistaBtn); });
+    });
+
+    attiva(localStorage.getItem(STORAGE_KEY) === 'tabella' ? 'tabella' : 'albero');
+})();
+</script>
 {% endblock %}
