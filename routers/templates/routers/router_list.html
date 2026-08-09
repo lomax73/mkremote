@@ -160,7 +160,7 @@
         btn.addEventListener('click', function () { attiva(btn.dataset.vistaBtn); });
     });
 
-    attiva(localStorage.getItem(STORAGE_KEY) === 'tabella' ? 'tabella' : 'albero');
+    attiva(localStorage.getItem(STORAGE_KEY) === 'albero' ? 'albero' : 'tabella');
 })();
 </script>
 {% endblock %}
