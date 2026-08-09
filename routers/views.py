@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -5,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from . import diagnostics, portal_client
+from . import diagnostics, portal_client, services
 from .forms import RouterForm
 from .models import Router
 
@@ -33,6 +34,7 @@ class RouterListView(LoginRequiredMixin, ListView):
         gruppi = {}
         for router in context['routers']:
             router.ultimo_backup_ok = ultimi_backup_ok.get(router.pk)
+            router.stato_routeros = services.stato_aggiornamento_routeros(router.versione_routeros)
             nome_cliente = by_id.get(str(router.cliente_id)) if router.cliente_id else None
             gruppi.setdefault(nome_cliente, []).append(router)
 
@@ -45,6 +47,7 @@ class RouterListView(LoginRequiredMixin, ListView):
             sezioni.append({'cliente': None, 'routers': senza_cliente})
 
         context['sezioni'] = sezioni
+        context['routeros_latest_stable'] = settings.ROUTEROS_LATEST_STABLE
         return context
 
 
@@ -57,6 +60,8 @@ class RouterDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         from backups.models import Backup
         context['ultimo_backup'] = Backup.objects.filter(router=self.object).first()
+        context['stato_routeros'] = services.stato_aggiornamento_routeros(self.object.versione_routeros)
+        context['routeros_latest_stable'] = settings.ROUTEROS_LATEST_STABLE
         context['cliente_nome'] = None
         if self.object.cliente_id:
             try:

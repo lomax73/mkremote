@@ -24,11 +24,20 @@
         <th>Versione RouterOS</th>
         <td>
             {{ router.versione_routeros|default:"—" }}
+            {% if stato_routeros == 'aggiornato' %}
+                <span class="badge badge-connesso">Aggiornato</span>
+            {% elif stato_routeros == 'leggero_ritardo' %}
+                <span class="badge badge-in_attesa_vpn">Leggermente indietro</span>
+            {% elif stato_routeros == 'molto_indietro' %}
+                <span class="badge badge-offline">Molto indietro</span>
+            {% else %}
+                <span class="badge badge-non_configurato">Sconosciuto</span>
+            {% endif %}
             <p style="margin: 0.4rem 0 0; font-size: 0.82rem; color: #64748b;">
-                Prima di aggiornare verifica l'architettura del modello (mipsbe / arm / arm64 / tile / x86)
-                e scarica il pacchetto corrispondente dalla pagina download ufficiale MikroTik
-                (mikrotik.com/download). Passando da RouterOS 6 a 7 aggiorna anche il RouterBOOT con
-                <code>/system routerboard upgrade</code> e riavvia.
+                Ultima stabile nota: {{ routeros_latest_stable }}. Prima di aggiornare verifica l'architettura del
+                modello (mipsbe / arm / arm64 / tile / x86) e scarica il pacchetto corrispondente dalla pagina
+                download ufficiale MikroTik (mikrotik.com/download). Passando da RouterOS 6 a 7 aggiorna anche il
+                RouterBOOT con <code>/system routerboard upgrade</code> e riavvia.
             </p>
         </td>
     </tr>

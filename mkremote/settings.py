@@ -52,6 +52,13 @@ INTERNAL_API_TOKEN = os.environ.get('INTERNAL_API_TOKEN', '')
 PORTAL_INTERNAL_BASE_URL = os.environ.get('PORTAL_INTERNAL_BASE_URL', '')
 PORTAL_API_TOKEN = os.environ.get('PORTAL_API_TOKEN', '')
 
+# Ultima versione RouterOS "stable" nota, usata per segnalare nella UI i router
+# rimasti indietro (vedi routers/services.py:stato_aggiornamento_routeros).
+# MikroTik non ha un endpoint pubblico documentato per interrogarla in automatico:
+# va aggiornata a mano qui (o via env) quando esce una nuova release stabile,
+# controllando https://mikrotik.com/download/changelogs .
+ROUTEROS_LATEST_STABLE = os.environ.get('ROUTEROS_LATEST_STABLE', '7.23.3')
+
 # Pianificazione subnet VPN WireGuard hub-and-spoke (vedi Fase 0 / Fase 2).
 # Configurabile da env, mai hardcoded altrove nel codice.
 VPN_SUBNET_CIDR = os.environ.get('VPN_SUBNET_CIDR', '10.10.0.0/24')
