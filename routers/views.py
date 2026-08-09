@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from . import diagnostics
+from . import diagnostics, portal_client
 from .forms import RouterForm
 from .models import Router
 
@@ -14,6 +14,29 @@ class RouterListView(LoginRequiredMixin, ListView):
     model = Router
     template_name = 'routers/router_list.html'
     context_object_name = 'routers'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            by_id = {c['id']: c['ragione_sociale'] for c in portal_client.list_clienti()}
+        except portal_client.PortalUnavailableError:
+            by_id = {}
+
+        gruppi = {}
+        for router in context['routers']:
+            nome_cliente = by_id.get(str(router.cliente_id)) if router.cliente_id else None
+            gruppi.setdefault(nome_cliente, []).append(router)
+
+        senza_cliente = gruppi.pop(None, [])
+        sezioni = [
+            {'cliente': nome, 'routers': gruppi[nome]}
+            for nome in sorted(gruppi)
+        ]
+        if senza_cliente:
+            sezioni.append({'cliente': None, 'routers': senza_cliente})
+
+        context['sezioni'] = sezioni
+        return context
 
 
 class RouterDetailView(LoginRequiredMixin, DetailView):
@@ -25,6 +48,13 @@ class RouterDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         from backups.models import Backup
         context['ultimo_backup'] = Backup.objects.filter(router=self.object).first()
+        context['cliente_nome'] = None
+        if self.object.cliente_id:
+            try:
+                cliente = portal_client.get_cliente(self.object.cliente_id)
+            except portal_client.PortalUnavailableError:
+                cliente = None
+            context['cliente_nome'] = cliente['ragione_sociale'] if cliente else 'Cliente non disponibile'
         return context
 
 

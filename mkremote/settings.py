@@ -46,6 +46,12 @@ MASTER_ENCRYPTION_KEY = os.environ.get('MASTER_ENCRYPTION_KEY')
 # aggiuntiva. Generarlo con: python -c "import secrets; print(secrets.token_urlsafe(32))"
 INTERNAL_API_TOKEN = os.environ.get('INTERNAL_API_TOKEN', '')
 
+# Client per l'anagrafica clienti condivisa del Portale FBO (clienti/api/internal/),
+# usata per raggruppare i router per cliente (vedi routers/portal_client.py).
+# Stesso pattern/token già in uso da FBOFiberReport/FBOPreventivi.
+PORTAL_INTERNAL_BASE_URL = os.environ.get('PORTAL_INTERNAL_BASE_URL', '')
+PORTAL_API_TOKEN = os.environ.get('PORTAL_API_TOKEN', '')
+
 # Pianificazione subnet VPN WireGuard hub-and-spoke (vedi Fase 0 / Fase 2).
 # Configurabile da env, mai hardcoded altrove nel codice.
 VPN_SUBNET_CIDR = os.environ.get('VPN_SUBNET_CIDR', '10.10.0.0/24')

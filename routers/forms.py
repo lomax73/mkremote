@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django import forms
 
+from . import portal_client
 from .models import Router
 
 
@@ -19,6 +20,7 @@ class RouterForm(forms.ModelForm):
         help_text='Ogni quanti giorni eseguire il backup automatico. Lascia vuoto per avere '
                    'solo backup manuali.',
     )
+    cliente = forms.ChoiceField(label='Cliente', required=False)
 
     class Meta:
         model = Router
@@ -38,8 +40,22 @@ class RouterForm(forms.ModelForm):
             self.fields['password'].required = True
         if self.instance.pk:
             self.fields['intervallo_backup_giorni'].initial = self.instance.intervallo_backup_giorni
+
+        choices = [('', '— nessuno —')]
+        try:
+            clienti = portal_client.list_clienti()
+        except portal_client.PortalUnavailableError as exc:
+            self.fields['cliente'].help_text = (
+                f'Impossibile contattare l\'anagrafica clienti nel Portale: {exc}'
+            )
+        else:
+            choices += [(c['id'], c['ragione_sociale']) for c in clienti]
+        self.fields['cliente'].choices = choices
+        if self.instance.pk and self.instance.cliente_id:
+            self.fields['cliente'].initial = str(self.instance.cliente_id)
+
         self.order_fields([
-            'nome', 'location', 'note',
+            'nome', 'cliente', 'location', 'note',
             'modello_hardware', 'versione_routeros',
             'ip_pubblico_o_ddns', 'ip_lan', 'porta_ssh', 'porta_api',
             'username', 'password',
@@ -53,6 +69,7 @@ class RouterForm(forms.ModelForm):
             router.password = new_password
         giorni = self.cleaned_data.get('intervallo_backup_giorni')
         router.intervallo_backup = timedelta(days=giorni) if giorni else None
+        router.cliente_id = self.cleaned_data['cliente'] or None
         if commit:
             router.save()
         return router

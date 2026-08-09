@@ -1,28 +1,64 @@
 {% extends "base.html" %}
 {% block title %}Router — MKRemote{% endblock %}
+{% block extra_head %}
+<style>
+    .cliente-sezione { margin-bottom: 1.75rem; }
+    .cliente-sezione:last-child { margin-bottom: 0; }
+    .cliente-titolo {
+        font-family: var(--font-display); font-weight: 600; font-size: 1rem;
+        color: var(--navy); margin: 0 0 0.6rem;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cliente-titolo .senza-cliente { color: #64748b; font-weight: 500; font-style: italic; }
+    .cliente-titolo .conteggio {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.8rem; color: #64748b;
+    }
+    .albero-router { list-style: none; margin: 0; padding: 0 0 0 0.4rem; }
+    .albero-router li {
+        position: relative; padding: 0.5rem 0 0.5rem 1.4rem;
+        border-left: 1.5px solid var(--border);
+    }
+    .albero-router li:last-child { border-left-color: transparent; }
+    .albero-router li::before {
+        content: ""; position: absolute; left: -1.5px; top: 0; height: 1.35rem;
+        width: 1.1rem; border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+        border-bottom-left-radius: 6px;
+    }
+    .albero-router li:last-child::before { border-left-color: var(--border); }
+    .router-riga { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .router-riga a { font-weight: 600; text-decoration: none; }
+    .router-riga a:hover { text-decoration: underline; }
+    .router-riga .location { color: #64748b; font-size: 0.88rem; }
+</style>
+{% endblock %}
 {% block content %}
 <h1>Router</h1>
 <p><a class="btn" href="{% url 'router-create' %}">+ Nuovo router</a></p>
-<table>
-    <thead>
-        <tr>
-            <th>Nome</th>
-            <th>Location</th>
-            <th>IP VPN</th>
-            <th>Stato</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for router in routers %}
-        <tr>
-            <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
-            <td>{{ router.location }}</td>
-            <td class="mono">{{ router.ip_vpn|default:"—" }}</td>
-            <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4">Nessun router registrato.</td></tr>
+
+{% for sezione in sezioni %}
+<div class="cliente-sezione">
+    <p class="cliente-titolo">
+        {% if sezione.cliente %}
+            🏢 {{ sezione.cliente }}
+        {% else %}
+            <span class="senza-cliente">Senza cliente</span>
+        {% endif %}
+        <span class="conteggio">({{ sezione.routers|length }})</span>
+    </p>
+    <ul class="albero-router">
+        {% for router in sezione.routers %}
+        <li>
+            <div class="router-riga">
+                <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>
+                {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
+                <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
+                <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
+            </div>
+        </li>
         {% endfor %}
-    </tbody>
-</table>
+    </ul>
+</div>
+{% empty %}
+<p>Nessun router registrato.</p>
+{% endfor %}
 {% endblock %}

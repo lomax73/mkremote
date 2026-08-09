@@ -14,6 +14,10 @@ class Router(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     location = models.CharField(max_length=200, blank=True)
     note = models.TextField(blank=True)
+    cliente_id = models.UUIDField(
+        'ID cliente', null=True, blank=True,
+        help_text="Riferimento all'anagrafica clienti condivisa del Portale, per raggruppare i router.",
+    )
 
     modello_hardware = models.CharField(max_length=100, blank=True)
     versione_routeros = models.CharField(max_length=50, blank=True)

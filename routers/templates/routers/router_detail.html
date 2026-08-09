@@ -7,6 +7,7 @@
 </h1>
 
 <table>
+    <tr><th>Cliente</th><td>{{ cliente_nome|default:"—" }}</td></tr>
     <tr><th>Location</th><td>{{ router.location|default:"—" }}</td></tr>
     <tr><th>Note</th><td>{{ router.note|linebreaksbr|default:"—" }}</td></tr>
     <tr><th>Modello hardware</th><td>{{ router.modello_hardware|default:"—" }}</td></tr>
