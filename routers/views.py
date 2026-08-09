@@ -34,7 +34,6 @@ class RouterListView(LoginRequiredMixin, ListView):
         gruppi = {}
         for router in context['routers']:
             router.ultimo_backup_ok = ultimi_backup_ok.get(router.pk)
-            router.stato_routeros = services.stato_aggiornamento_routeros(router.versione_routeros)
             nome_cliente = by_id.get(str(router.cliente_id)) if router.cliente_id else None
             gruppi.setdefault(nome_cliente, []).append(router)
 
@@ -47,7 +46,6 @@ class RouterListView(LoginRequiredMixin, ListView):
             sezioni.append({'cliente': None, 'routers': senza_cliente})
 
         context['sezioni'] = sezioni
-        context['routeros_latest_stable'] = settings.ROUTEROS_LATEST_STABLE
         return context
 
 

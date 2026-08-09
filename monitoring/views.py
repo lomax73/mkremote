@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,6 +11,7 @@ from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
+from routers import services
 from routers.models import Router
 
 from .forms import AlertSettingsForm
@@ -28,8 +30,10 @@ class DashboardView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         for router in context['routers']:
             router.ultima_metrica = router.metriche.first()
+            router.stato_routeros = services.stato_aggiornamento_routeros(router.versione_routeros)
         context['alert_aperti'] = AlertEvent.objects.filter(stato=AlertEvent.Stato.APERTO).select_related('router')
         context['soglia_temperatura'] = AlertSettings.get_solo().soglia_temperatura_celsius
+        context['routeros_latest_stable'] = settings.ROUTEROS_LATEST_STABLE
         return context
 
 
