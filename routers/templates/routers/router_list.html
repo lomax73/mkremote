@@ -60,6 +60,13 @@
     .routeros-badge.molto_indietro { background: #fee2e2; color: #991b1b; }
     .routeros-badge.sconosciuto { background: #f1f5f9; color: #64748b; }
 
+    /* --- Pulsante copia IP VPN --- */
+    .btn-copia {
+        border: none; background: none; cursor: pointer;
+        font-size: 0.85rem; padding: 0.05rem 0.25rem; border-radius: 6px; vertical-align: middle;
+    }
+    .btn-copia:hover { background: var(--azure-tint); }
+
     /* --- Vista tabellare --- */
     .cliente-sezione table { margin-top: 0; }
 
@@ -94,6 +101,7 @@
                     <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>
                     {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
                     <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
+                    {% if router.ip_vpn %}<button type="button" class="btn-copia" data-copia="{{ router.ip_vpn }}" title="Copia IP VPN" aria-label="Copia IP VPN">📋</button>{% endif %}
                     <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
                     <span class="backup-indicatore" title="{% if router.ultimo_backup_ok %}Ultimo backup riuscito: {{ router.ultimo_backup_ok.creato_il }}{% else %}Nessun backup riuscito{% endif %}">
                         <span class="backup-pallino {% if router.ultimo_backup_ok %}ok{% else %}assente{% endif %}"></span>
@@ -155,7 +163,10 @@
                 <tr>
                     <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
                     <td>{{ router.location }}</td>
-                    <td class="mono">{{ router.ip_vpn|default:"—" }}</td>
+                    <td class="mono">
+                        {{ router.ip_vpn|default:"—" }}
+                        {% if router.ip_vpn %}<button type="button" class="btn-copia" data-copia="{{ router.ip_vpn }}" title="Copia IP VPN" aria-label="Copia IP VPN">📋</button>{% endif %}
+                    </td>
                     <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
                     <td>
                         <span class="backup-indicatore" title="{% if router.ultimo_backup_ok %}Ultimo backup riuscito: {{ router.ultimo_backup_ok.creato_il }}{% else %}Nessun backup riuscito{% endif %}">
@@ -218,6 +229,16 @@
     });
 
     attiva(localStorage.getItem(STORAGE_KEY) === 'albero' ? 'albero' : 'tabella');
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-copia');
+        if (!btn) return;
+        navigator.clipboard.writeText(btn.dataset.copia).then(function () {
+            var originale = btn.textContent;
+            btn.textContent = '✅';
+            setTimeout(function () { btn.textContent = originale; }, 1200);
+        });
+    });
 })();
 </script>
 {% endblock %}
