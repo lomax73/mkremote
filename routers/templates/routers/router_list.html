@@ -40,6 +40,13 @@
     .router-riga a:hover { text-decoration: underline; }
     .router-riga .location { color: #64748b; font-size: 0.88rem; }
 
+    /* --- Indicatore backup (usato in entrambe le viste) --- */
+    .backup-indicatore { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .backup-pallino { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .backup-pallino.ok { background: #22c55e; }
+    .backup-pallino.assente { background: #ef4444; }
+    .backup-data { font-size: 0.8rem; color: #64748b; }
+
     /* --- Vista tabellare --- */
     .cliente-sezione table { margin-top: 0; }
 
@@ -75,6 +82,10 @@
                     {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
                     <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
                     <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
+                    <span class="backup-indicatore" title="{% if router.ultimo_backup_ok %}Ultimo backup riuscito: {{ router.ultimo_backup_ok.creato_il }}{% else %}Nessun backup riuscito{% endif %}">
+                        <span class="backup-pallino {% if router.ultimo_backup_ok %}ok{% else %}assente{% endif %}"></span>
+                        {% if router.ultimo_backup_ok %}<span class="backup-data">{{ router.ultimo_backup_ok.creato_il|date:"d/m/Y" }}</span>{% endif %}
+                    </span>
                 </div>
             </li>
             {% endfor %}
@@ -103,6 +114,7 @@
                     <th>Location</th>
                     <th>IP VPN</th>
                     <th>Stato</th>
+                    <th>Backup</th>
                 </tr>
             </thead>
             <tbody>
@@ -112,6 +124,12 @@
                     <td>{{ router.location }}</td>
                     <td class="mono">{{ router.ip_vpn|default:"—" }}</td>
                     <td><span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span></td>
+                    <td>
+                        <span class="backup-indicatore" title="{% if router.ultimo_backup_ok %}Ultimo backup riuscito: {{ router.ultimo_backup_ok.creato_il }}{% else %}Nessun backup riuscito{% endif %}">
+                            <span class="backup-pallino {% if router.ultimo_backup_ok %}ok{% else %}assente{% endif %}"></span>
+                            {% if router.ultimo_backup_ok %}<span class="backup-data">{{ router.ultimo_backup_ok.creato_il|date:"d/m/Y" }}</span>{% endif %}
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

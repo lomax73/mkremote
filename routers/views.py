@@ -22,8 +22,17 @@ class RouterListView(LoginRequiredMixin, ListView):
         except portal_client.PortalUnavailableError:
             by_id = {}
 
+        from backups.models import Backup
+        ultimi_backup_ok = {
+            b.router_id: b
+            for b in Backup.objects.filter(
+                router__in=[r.pk for r in context['routers']], esito=Backup.Esito.RIUSCITO
+            ).order_by('router_id', '-creato_il').distinct('router_id')
+        }
+
         gruppi = {}
         for router in context['routers']:
+            router.ultimo_backup_ok = ultimi_backup_ok.get(router.pk)
             nome_cliente = by_id.get(str(router.cliente_id)) if router.cliente_id else None
             gruppi.setdefault(nome_cliente, []).append(router)
 
