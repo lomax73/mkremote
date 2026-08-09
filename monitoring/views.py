@@ -29,6 +29,7 @@ class DashboardView(LoginRequiredMixin, ListView):
         for router in context['routers']:
             router.ultima_metrica = router.metriche.first()
         context['alert_aperti'] = AlertEvent.objects.filter(stato=AlertEvent.Stato.APERTO).select_related('router')
+        context['soglia_temperatura'] = AlertSettings.get_solo().soglia_temperatura_celsius
         return context
 
 

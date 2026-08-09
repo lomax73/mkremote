@@ -38,6 +38,7 @@
             <th>Ultimo check</th>
             <th>CPU</th>
             <th>RAM</th>
+            <th>Temperatura</th>
         </tr>
     </thead>
     <tbody>
@@ -52,9 +53,16 @@
                     {{ router.ultima_metrica.ram_usata_bytes|filesizeformat }} / {{ router.ultima_metrica.ram_totale_bytes|filesizeformat }}
                 {% else %}—{% endif %}
             </td>
+            <td>
+                {% if router.ultima_metrica.temperatura_celsius is not None %}
+                    <span class="badge {% if router.ultima_metrica.temperatura_celsius >= soglia_temperatura %}badge-offline{% elif router.ultima_metrica.temperatura_celsius >= soglia_temperatura|add:"-15" %}badge-in_attesa_vpn{% else %}badge-connesso{% endif %}">
+                        🌡 {{ router.ultima_metrica.temperatura_celsius }}°C
+                    </span>
+                {% else %}—{% endif %}
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">Nessun router registrato.</td></tr>
+        <tr><td colspan="6">Nessun router registrato.</td></tr>
         {% endfor %}
     </tbody>
 </table>
