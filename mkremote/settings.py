@@ -51,6 +51,11 @@ INTERNAL_API_TOKEN = os.environ.get('INTERNAL_API_TOKEN', '')
 # Stesso pattern/token già in uso da FBOFiberReport/FBOPreventivi.
 PORTAL_INTERNAL_BASE_URL = os.environ.get('PORTAL_INTERNAL_BASE_URL', '')
 PORTAL_API_TOKEN = os.environ.get('PORTAL_API_TOKEN', '')
+# Percorso del certificato (self-signed, es. /etc/ssl/portal/selfsigned.crt)
+# usato per verificare la connessione TLS verso PORTAL_INTERNAL_BASE_URL, al
+# posto di disattivare del tutto la verifica (RedFlag id 98). Vuoto in locale,
+# dove PORTAL_INTERNAL_BASE_URL punta tipicamente a un URL http:// di sviluppo.
+PORTAL_INTERNAL_CA_CERT = os.environ.get('PORTAL_INTERNAL_CA_CERT', '')
 
 # Ultima versione RouterOS "stable" nota, usata per segnalare nella UI i router
 # rimasti indietro (vedi routers/services.py:stato_aggiornamento_routeros).
