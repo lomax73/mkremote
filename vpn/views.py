@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
 
+from accounts.mixins import SuperuserRequiredMixin
 from routers.models import Router
 from routers.services import RouterProbeError
 
@@ -28,7 +29,7 @@ from .scripts import (
 from .services import VpnSubnetExhausted, assign_personal_vpn_ip, assign_vpn_ip, generate_wireguard_keypair
 
 
-class GenerateVpnScriptView(LoginRequiredMixin, View):
+class GenerateVpnScriptView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def get(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         try:
@@ -40,7 +41,7 @@ class GenerateVpnScriptView(LoginRequiredMixin, View):
         return render(request, 'vpn/script.html', {'router': router, 'script': script})
 
 
-class SaveWireguardPublicKeyView(LoginRequiredMixin, View):
+class SaveWireguardPublicKeyView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         public_key = request.POST.get('chiave_pubblica_wireguard', '').strip()
@@ -53,7 +54,7 @@ class SaveWireguardPublicKeyView(LoginRequiredMixin, View):
         return redirect('vpn-generate-script', pk=router.pk)
 
 
-class RegisterPeerView(LoginRequiredMixin, View):
+class RegisterPeerView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         if not router.chiave_pubblica_wireguard or not router.ip_vpn:
@@ -70,7 +71,7 @@ class RegisterPeerView(LoginRequiredMixin, View):
         return redirect('vpn-generate-script', pk=router.pk)
 
 
-class TestVpnConnectionView(LoginRequiredMixin, View):
+class TestVpnConnectionView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         ok = test_router_vpn_connection(router)
@@ -81,7 +82,7 @@ class TestVpnConnectionView(LoginRequiredMixin, View):
         return redirect('vpn-generate-script', pk=router.pk)
 
 
-class FetchRouterHardwareInfoView(LoginRequiredMixin, View):
+class FetchRouterHardwareInfoView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         try:
@@ -96,7 +97,7 @@ class FetchRouterHardwareInfoView(LoginRequiredMixin, View):
         return redirect('vpn-generate-script', pk=router.pk)
 
 
-class GenerateFirewallLockdownScriptView(LoginRequiredMixin, View):
+class GenerateFirewallLockdownScriptView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def get(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         if router.stato_connessione != Router.StatoConnessione.CONNESSO:
@@ -114,7 +115,7 @@ class GenerateFirewallLockdownScriptView(LoginRequiredMixin, View):
         return render(request, 'vpn/firewall_script.html', {'router': router, 'script': script})
 
 
-class ConfirmFirewallLockdownView(LoginRequiredMixin, View):
+class ConfirmFirewallLockdownView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
         router.accesso_pubblico_bloccato = True

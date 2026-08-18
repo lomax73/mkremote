@@ -6,6 +6,8 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
+from accounts.mixins import SuperuserRequiredMixin
+
 from . import diagnostics, portal_client, services
 from .forms import RouterForm
 from .models import Router
@@ -92,7 +94,7 @@ class RouterDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('router-list')
 
 
-class RouterRevealPasswordView(LoginRequiredMixin, View):
+class RouterRevealPasswordView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     """Decifra e restituisce la password salvata di un router, per recuperarla se dimenticata."""
 
     def post(self, request, pk):

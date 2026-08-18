@@ -23,7 +23,7 @@ class TerminalConsumer(AsyncWebsocketConsumer):
         self.reader_task = None
         self.sessione = None
 
-        if not self.user.is_authenticated:
+        if not self.user.is_authenticated or not self.user.is_superuser:
             await self.close()
             return
 
