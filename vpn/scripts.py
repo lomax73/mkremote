@@ -7,6 +7,14 @@ class VpnHubNotConfigured(Exception):
     """Il VPS hub non è ancora provisionato (endpoint/chiave pubblica mancanti)."""
 
 
+def _sanitize_comment(text: str) -> str:
+    """Rimuove newline/ritorni a capo da un valore prima di inserirlo in una
+    riga di commento `#` di uno script RouterOS: un newline non filtrato
+    farebbe terminare il commento a metà riga, trasformando quella
+    successiva in un comando RouterOS vero e proprio (RedFlag id 96)."""
+    return text.replace('\r', ' ').replace('\n', ' ')
+
+
 def generate_wireguard_setup_script(router) -> str:
     """Genera lo script RouterOS (.rsc) da incollare sul router per attivare il
     tunnel WireGuard verso il VPS hub.
@@ -25,10 +33,11 @@ def generate_wireguard_setup_script(router) -> str:
         raise ValueError('Il router non ha ancora un ip_vpn assegnato.')
 
     prefixlen = ipaddress.ip_network(settings.VPN_SUBNET_CIDR).prefixlen
+    nome = _sanitize_comment(router.nome)
 
     return f"""\
 # === MKRemote - Setup tunnel WireGuard verso il VPS hub ===
-# Router: {router.nome}
+# Router: {nome}
 # Da eseguire in un terminale RouterOS (WinBox o SSH). Non tocca il firewall:
 # il blocco dell'accesso pubblico si fa solo dopo aver verificato il tunnel
 # (vedi Fase 3), da un'altra sessione con accesso di riserva aperta.
@@ -70,9 +79,11 @@ def generate_firewall_lockdown_script(router) -> str:
     if not router.ip_vpn:
         raise ValueError('Il router non ha ancora un ip_vpn assegnato: completa prima la Fase 2.')
 
+    nome = _sanitize_comment(router.nome)
+
     return f"""\
 # === MKRemote - Blocco accesso pubblico ===
-# Router: {router.nome}
+# Router: {nome}
 # ATTENZIONE: esegui questo script SOLO se il router risulta "Connesso"
 # (tunnel VPN già verificato con successo). Tieni aperta una sessione
 # WinBox/SSH separata come rete di sicurezza mentre lo applichi: se qualcosa

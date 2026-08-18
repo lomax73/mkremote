@@ -1,7 +1,17 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 
 from .fields import EncryptedCharField
+
+# router.nome finisce dentro una riga di commento `#` degli script RouterOS
+# generati da vpn/scripts.py: un newline non filtrato farebbe terminare il
+# commento a metà riga, trasformando quella successiva in un comando
+# RouterOS vero e proprio quando l'operatore incolla lo script sul router
+# (RedFlag id 96). vpn/scripts.py sanitizza comunque il valore all'uso, ma
+# vietarlo già qui evita che un nome "sporco" venga salvato.
+_nome_senza_newline = RegexValidator(
+    regex=r'^[^\r\n]*$', message='Il nome non può contenere andare a capo.',
+)
 
 
 class Router(models.Model):
@@ -11,7 +21,7 @@ class Router(models.Model):
         CONNESSO = 'connesso', 'Connesso'
         OFFLINE = 'offline', 'Offline'
 
-    nome = models.CharField(max_length=100, unique=True)
+    nome = models.CharField(max_length=100, unique=True, validators=[_nome_senza_newline])
     location = models.CharField(max_length=200, blank=True)
     note = models.TextField(blank=True)
     cliente_id = models.UUIDField(
