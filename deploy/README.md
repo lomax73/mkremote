@@ -4,6 +4,11 @@ Il deploy completo di MKRemote (systemd, Nginx, sequenza di aggiornamento)
 non è ancora tracciato in questo repo; vedi la memoria di sessione
 `reference_vps_deploy` per la procedura attuale sul VPS.
 
+**`DJANGO_DEBUG=false` in produzione** — `.env.example` lo lascia a
+"true", NON dimenticarlo: con DEBUG=True qualunque eccezione espone
+`MASTER_ENCRYPTION_KEY` (con cui si decifrano le credenziali di ogni
+router) e `INTERNAL_API_TOKEN`.
+
 ## API interna di gestione utenti (per il Portale)
 
 Da questa versione, MKRemote espone `accounts/` sotto `api/internal/`
