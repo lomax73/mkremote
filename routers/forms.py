@@ -2,6 +2,8 @@ from datetime import timedelta
 
 from django import forms
 
+from vpn.services import validate_lan_subnet
+
 from . import portal_client
 from .models import Router
 
@@ -29,7 +31,7 @@ class RouterForm(forms.ModelForm):
         fields = [
             'nome', 'location', 'note',
             'modello_hardware', 'versione_routeros',
-            'ip_pubblico_o_ddns', 'ip_lan', 'porta_ssh', 'porta_api',
+            'ip_pubblico_o_ddns', 'ip_lan', 'subnet_lan', 'porta_ssh', 'porta_api',
             'username',
             'backup_retention_count',
         ]
@@ -57,10 +59,13 @@ class RouterForm(forms.ModelForm):
         self.order_fields([
             'nome', 'cliente', 'location', 'note',
             'modello_hardware', 'versione_routeros',
-            'ip_pubblico_o_ddns', 'ip_lan', 'porta_ssh', 'porta_api',
+            'ip_pubblico_o_ddns', 'ip_lan', 'subnet_lan', 'porta_ssh', 'porta_api',
             'username', 'password',
             'intervallo_backup_giorni', 'backup_retention_count',
         ])
+
+    def clean_subnet_lan(self):
+        return validate_lan_subnet(self.cleaned_data.get('subnet_lan', ''), exclude_pk=self.instance.pk)
 
     def save(self, commit=True):
         router = super().save(commit=False)

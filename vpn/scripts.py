@@ -119,13 +119,42 @@ def generate_firewall_lockdown_script(router) -> str:
 """
 
 
-def generate_personal_client_conf(private_key: str, ip_vpn: str) -> str:
+def generate_lan_access_script(router) -> str:
+    """Genera lo script RouterOS (.rsc) che abilita l'accesso dalla VPN ai PC
+    della LAN dietro il router. Aggiunge solo un masquerade: gli host della LAN
+    vedono le connessioni come provenienti dal router, quindi non serve alcuna
+    route di ritorno né modifica ai loro gateway."""
+    if not router.ip_vpn or not router.subnet_lan:
+        raise ValueError('Servono un IP VPN assegnato e la subnet LAN del router.')
+
+    nome = _sanitize_comment(router.nome)
+
+    return f"""\
+# === MKRemote - Accesso alla LAN dalla VPN ===
+# Router: {nome}
+# Permette ai dispositivi VPN ({settings.VPN_SUBNET_CIDR}) di raggiungere la LAN {router.subnet_lan}.
+# Aggiunge solo regole in coda: non modifica né riordina quelle esistenti.
+
+# Le connessioni VPN->LAN escono con l'IP LAN del router come sorgente.
+/ip firewall nat add chain=srcnat src-address={settings.VPN_SUBNET_CIDR} \\
+    dst-address={router.subnet_lan} action=masquerade comment="MKRemote: VPN verso LAN"
+
+# Consente il forward dal tunnel alla LAN. Se nella chain forward hai regole di
+# drop generiche che precedono questa, spostala sopra con `move`.
+/ip firewall filter add chain=forward action=accept in-interface=wireguard-mkremote \\
+    dst-address={router.subnet_lan} comment="MKRemote: consenti VPN verso LAN"
+"""
+
+
+def generate_personal_client_conf(private_key: str, ip_vpn: str, lan_subnets=()) -> str:
     """Genera il file .conf per un dispositivo personale (Fase 7): laptop o
     telefono, da importare nell'app WireGuard ufficiale (anche via QR code).
 
     AllowedIPs è l'intera subnet VPN (non solo l'IP del peer): così il
     dispositivo raggiunge sia l'hub sia tutti i router già collegati con un
-    solo profilo, senza dover elencare ogni router singolarmente."""
+    solo profilo, senza dover elencare ogni router singolarmente. Le subnet LAN
+    dei router che ne dichiarano una vengono aggiunte, per raggiungere anche i
+    PC dietro di essi."""
     if not settings.VPN_HUB_PUBLIC_ENDPOINT or not settings.VPN_HUB_PUBLIC_KEY:
         raise VpnHubNotConfigured(
             'Il VPS hub non è ancora configurato (VPN_HUB_PUBLIC_ENDPOINT / '
@@ -140,6 +169,6 @@ Address = {ip_vpn}/32
 [Peer]
 PublicKey = {settings.VPN_HUB_PUBLIC_KEY}
 Endpoint = {settings.VPN_HUB_PUBLIC_ENDPOINT}:{settings.VPN_HUB_PUBLIC_PORT}
-AllowedIPs = {settings.VPN_SUBNET_CIDR}
+AllowedIPs = {', '.join([settings.VPN_SUBNET_CIDR, *lan_subnets])}
 PersistentKeepalive = 25
 """

@@ -32,6 +32,14 @@ lista dei router.
      testare la connessione dall'app: il server dell'app gira sul VPS, quindi
      non ha accesso diretto alla rete locale del router — la verifica di
      connessione reale avviene via VPN (vedi punto 2 qui sotto).
+   - **Subnet LAN via VPN** (facoltativa, es. `10.0.0.0/24`): rete dietro il
+     router. Se compilata, dal pulsante "Accesso LAN" nel dettaglio router si
+     ottiene lo script RouterOS (masquerade + forward) e, dopo "Registra peer
+     sul server", i dispositivi VPN personali **creati da quel momento**
+     raggiungono tutti i PC della LAN. I profili già esistenti non includono la
+     LAN (la chiave privata non è conservata): crea un nuovo dispositivo. Una
+     subnet può essere dichiarata da un solo router; quella dell'hub
+     (`10.10.0.0/24`) e le reti pubbliche sono rifiutate.
    - **Porta SSH** (default 22) e **Porta API** (default 8728): porte del
      router usate per backup, monitoraggio e terminale.
    - **Username** e **Password**: credenziali di amministrazione del router.

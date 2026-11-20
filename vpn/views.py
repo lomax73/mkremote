@@ -23,10 +23,17 @@ from .models import PersonalVpnDevice
 from .scripts import (
     VpnHubNotConfigured,
     generate_firewall_lockdown_script,
+    generate_lan_access_script,
     generate_personal_client_conf,
     generate_wireguard_setup_script,
 )
-from .services import VpnSubnetExhausted, assign_personal_vpn_ip, assign_vpn_ip, generate_wireguard_keypair
+from .services import (
+    VpnSubnetExhausted,
+    assign_personal_vpn_ip,
+    assign_vpn_ip,
+    generate_wireguard_keypair,
+    personal_client_lan_subnets,
+)
 
 
 class GenerateVpnScriptView(LoginRequiredMixin, SuperuserRequiredMixin, View):
@@ -61,7 +68,7 @@ class RegisterPeerView(LoginRequiredMixin, SuperuserRequiredMixin, View):
             messages.error(request, 'Servono sia la chiave pubblica che un IP VPN assegnato prima di registrare il peer.')
             return redirect('vpn-generate-script', pk=router.pk)
         try:
-            register_peer_on_hub(router.chiave_pubblica_wireguard, router.ip_vpn)
+            register_peer_on_hub(router.chiave_pubblica_wireguard, router.ip_vpn, router.subnet_lan)
         except (VpsNotConfigured, VpsCommandFailed) as exc:
             messages.error(request, f'Registrazione peer fallita: {exc}')
         else:
@@ -115,6 +122,17 @@ class GenerateFirewallLockdownScriptView(LoginRequiredMixin, SuperuserRequiredMi
         return render(request, 'vpn/firewall_script.html', {'router': router, 'script': script})
 
 
+class GenerateLanAccessScriptView(LoginRequiredMixin, SuperuserRequiredMixin, View):
+    def get(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        try:
+            script = generate_lan_access_script(router)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect('router-detail', pk=router.pk)
+        return render(request, 'vpn/lan_script.html', {'router': router, 'script': script})
+
+
 class ConfirmFirewallLockdownView(LoginRequiredMixin, SuperuserRequiredMixin, View):
     def post(self, request, pk):
         router = get_object_or_404(Router, pk=pk)
@@ -141,7 +159,7 @@ class AddPersonalDeviceView(LoginRequiredMixin, View):
             ip_vpn = assign_personal_vpn_ip()
             private_key, public_key = generate_wireguard_keypair()
             register_peer_on_hub(public_key, ip_vpn)
-            conf = generate_personal_client_conf(private_key, ip_vpn)
+            conf = generate_personal_client_conf(private_key, ip_vpn, personal_client_lan_subnets())
         except (VpnSubnetExhausted, VpsNotConfigured, VpsCommandFailed, VpnHubNotConfigured) as exc:
             messages.error(request, f'Impossibile creare il dispositivo: {exc}')
             return redirect('vpn-device-list')

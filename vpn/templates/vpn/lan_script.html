@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Accesso LAN — {{ router.nome }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'router-detail' router.pk %}">&larr; {{ router.nome }}</a></p>
+<h1>Accesso alla LAN dalla VPN — {{ router.nome }}</h1>
+
+<p>
+    Per raggiungere i PC della LAN <code class="mono">{{ router.subnet_lan }}</code>
+    dai dispositivi VPN personali servono tre passi, in quest'ordine:
+</p>
+<ol>
+    <li>
+        <strong>Router:</strong> copia e incolla lo script qui sotto in un terminale RouterOS
+        (WinBox o SSH).
+    </li>
+    <li>
+        <strong>VPS hub:</strong> premi "Registra peer sul server" nella
+        <a href="{% url 'vpn-generate-script' router.pk %}">pagina dello script VPN</a>:
+        ora instrada sul peer anche la LAN (AllowedIPs e route sull'hub).
+    </li>
+    <li>
+        <strong>Dispositivo personale:</strong> i profili creati prima di questa
+        configurazione non includono la LAN. Crea un nuovo dispositivo in
+        <a href="{% url 'vpn-device-list' %}">I miei dispositivi VPN</a> (la chiave privata non
+        viene conservata, quindi un profilo esistente non si può rigenerare), oppure aggiungi
+        <code class="mono">{{ router.subnet_lan }}</code> agli AllowedIPs del profilo a mano.
+    </li>
+</ol>
+
+<pre style="background:#111827; color:#e5e7eb; padding:1rem; border-radius:8px; overflow-x:auto;"><code>{{ script }}</code></pre>
+{% endblock %}

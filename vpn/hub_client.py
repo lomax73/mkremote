@@ -21,7 +21,7 @@ def _require_vps_config():
         )
 
 
-async def _register_peer(peer_public_key: str, peer_vpn_ip: str) -> None:
+async def _register_peer(peer_public_key: str, peer_vpn_ip: str, lan_subnet: str = '') -> None:
     iface = settings.VPN_WG_INTERFACE
     conf_path = settings.VPN_WG_CONF_PATH
 
@@ -31,9 +31,14 @@ async def _register_peer(peer_public_key: str, peer_vpn_ip: str) -> None:
     # 3) wg syncconf: riconcilia l'interfaccia con quella config (no-op perché è la
     #    stessa già applicata), garantendo che runtime e file su disco restino
     #    coerenti per il prossimo riavvio del servizio.
+    # Con subnet LAN: la rete va negli allowed-ips del peer (cryptokey routing) e
+    # serve una route sul kernel dell'hub, che `wg set` non aggiunge da solo.
+    allowed = f"{peer_vpn_ip}/32" + (f",{lan_subnet}" if lan_subnet else "")
+    route = f"ip route replace {shlex.quote(lan_subnet)} dev {shlex.quote(iface)} && " if lan_subnet else ""
     remote_command = (
         f"wg set {shlex.quote(iface)} peer {shlex.quote(peer_public_key)} "
-        f"allowed-ips {shlex.quote(peer_vpn_ip)}/32 && "
+        f"allowed-ips {shlex.quote(allowed)} && "
+        f"{route}"
         f"wg showconf {shlex.quote(iface)} > {shlex.quote(conf_path)} && "
         f"wg syncconf {shlex.quote(iface)} {shlex.quote(conf_path)}"
     )
@@ -52,15 +57,16 @@ async def _register_peer(peer_public_key: str, peer_vpn_ip: str) -> None:
             )
 
 
-def register_peer_on_hub(peer_public_key: str, peer_vpn_ip: str) -> None:
+def register_peer_on_hub(peer_public_key: str, peer_vpn_ip: str, lan_subnet: str = '') -> None:
     """Registra la chiave pubblica del router come peer WireGuard sul VPS hub.
+    Con `lan_subnet` instrada sul peer anche la LAN dietro il router.
 
     Solleva VpsNotConfigured se il VPS non è ancora raggiungibile/configurato
     (stato attuale del progetto, vedi fase_8), o VpsCommandFailed se il comando
     remoto fallisce.
     """
     _require_vps_config()
-    asyncio.run(_register_peer(peer_public_key, peer_vpn_ip))
+    asyncio.run(_register_peer(peer_public_key, peer_vpn_ip, lan_subnet))
 
 
 async def _remove_peer(peer_public_key: str) -> None:

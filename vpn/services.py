@@ -4,6 +4,7 @@ import ipaddress
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from routers.models import Router
 
@@ -91,4 +92,51 @@ def assign_vpn_ip(router: Router) -> str:
     raise VpnSubnetExhausted(
         f"Nessun IP libero nella subnet {settings.VPN_SUBNET_CIDR} "
         f"a partire da {settings.VPN_ROUTER_IP_RANGE_START}."
+    )
+
+
+# Reti che una LAN di router non può mai coprire: la VPN stessa, l'hub FBOAIGate
+# (wg1) e la rete pubblica del VPS. Tenere allineato con deploy/mkremote-wg-peer.sh.
+RESERVED_LAN_NETWORKS = ('10.10.0.0/24', '10.20.0.0/24', '94.177.161.0/24')
+
+
+def validate_lan_subnet(value: str, exclude_pk=None) -> str:
+    """Valida e normalizza la subnet LAN di un router (CIDR IPv4 privato).
+
+    Restituisce '' se vuota. Rifiuta reti non private, troppo ampie (< /16) o
+    troppo strette (> /30), sovrapposte a reti riservate o a quella già
+    dichiarata da un altro router: WireGuard non può instradare la stessa
+    rete verso due peer, il secondo sovrascriverebbe silenziosamente il primo."""
+    value = (value or '').strip()
+    if not value:
+        return ''
+    try:
+        net = ipaddress.ip_network(value, strict=True)
+    except ValueError:
+        raise ValidationError(
+            'Subnet non valida: usa la notazione CIDR con indirizzo di rete, es. 10.0.0.0/24.'
+        )
+    if net.version != 4 or not net.is_private:
+        raise ValidationError('La subnet LAN deve essere una rete IPv4 privata.')
+    if not 16 <= net.prefixlen <= 30:
+        raise ValidationError('La subnet LAN deve avere prefisso tra /16 e /30.')
+    for reserved in RESERVED_LAN_NETWORKS + (settings.VPN_SUBNET_CIDR,):
+        if net.overlaps(ipaddress.ip_network(reserved)):
+            raise ValidationError(f'La subnet si sovrappone a una rete riservata ({reserved}).')
+    others = Router.objects.exclude(subnet_lan='')
+    if exclude_pk is not None:
+        others = others.exclude(pk=exclude_pk)
+    for other in others:
+        if net.overlaps(ipaddress.ip_network(other.subnet_lan)):
+            raise ValidationError(
+                f'La subnet si sovrappone a quella del router "{other.nome}" ({other.subnet_lan}): '
+                f'una rete può essere raggiunta tramite un solo router.'
+            )
+    return str(net)
+
+
+def personal_client_lan_subnets() -> list[str]:
+    """Subnet LAN dei router da aggiungere agli AllowedIPs dei dispositivi personali."""
+    return list(
+        Router.objects.exclude(subnet_lan='').order_by('subnet_lan').values_list('subnet_lan', flat=True)
     )

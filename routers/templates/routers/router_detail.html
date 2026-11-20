@@ -43,6 +43,7 @@
     </tr>
     <tr><th>IP pubblico / DDNS</th><td class="mono">{{ router.ip_pubblico_o_ddns|default:"—" }}</td></tr>
     <tr><th>IP LAN</th><td class="mono">{{ router.ip_lan|default:"—" }}</td></tr>
+    <tr><th>Subnet LAN via VPN</th><td class="mono">{{ router.subnet_lan|default:"—" }}</td></tr>
     <tr><th>Porta SSH</th><td class="mono">{{ router.porta_ssh }}</td></tr>
     <tr><th>Porta API</th><td class="mono">{{ router.porta_api }}</td></tr>
     <tr><th>Username</th><td class="mono">{{ router.username }}</td></tr>
@@ -96,6 +97,9 @@
     <button class="btn" type="button" id="btn-diagnostica">📡 Test connessione</button>
     {% endif %}
     <a class="btn" href="{% url 'monitoring-router-detail' router.pk %}">Monitoraggio</a>
+    {% if router.ip_vpn and router.subnet_lan %}
+    <a class="btn" href="{% url 'vpn-generate-lan-script' router.pk %}">Accesso LAN</a>
+    {% endif %}
     {% if router.stato_connessione == 'connesso' %}
     <a class="btn btn-danger" href="{% url 'vpn-generate-firewall-script' router.pk %}">Blocca accesso pubblico</a>
     {% endif %}

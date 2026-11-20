@@ -37,6 +37,12 @@ class Router(models.Model):
         protocol='IPv4', null=True, blank=True,
         help_text='IP del router nella rete locale, utile per test diretti prima di configurare la VPN.',
     )
+    subnet_lan = models.CharField(
+        'Subnet LAN raggiungibile via VPN', max_length=18, blank=True,
+        help_text='Rete locale dietro il router (es. 10.0.0.0/24). Se compilata, i dispositivi '
+                   'VPN personali raggiungono tutti gli host della LAN attraverso questo router. '
+                   'Una stessa subnet non può essere usata da due router.',
+    )
     porta_ssh = models.PositiveIntegerField(
         default=22, validators=[MinValueValidator(1), MaxValueValidator(65535)]
     )
