@@ -10,6 +10,7 @@ urlpatterns = [
     path('router/<int:pk>/rileva-hw/', views.FetchRouterHardwareInfoView.as_view(), name='vpn-fetch-hardware-info'),
     path('router/<int:pk>/genera-script-firewall/', views.GenerateFirewallLockdownScriptView.as_view(), name='vpn-generate-firewall-script'),
     path('router/<int:pk>/genera-script-lan/', views.GenerateLanAccessScriptView.as_view(), name='vpn-generate-lan-script'),
+    path('router/<int:pk>/test-lan/', views.TestLanAccessView.as_view(), name='vpn-test-lan'),
     path('router/<int:pk>/conferma-blocco/', views.ConfirmFirewallLockdownView.as_view(), name='vpn-confirm-lockdown'),
     path('vpn/dispositivi/', views.PersonalDeviceListView.as_view(), name='vpn-device-list'),
     path('vpn/dispositivi/aggiungi/', views.AddPersonalDeviceView.as_view(), name='vpn-device-add'),

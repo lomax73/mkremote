@@ -1,9 +1,11 @@
 import base64
+import ipaddress
 from io import BytesIO
 
 import qrcode
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -12,6 +14,7 @@ from accounts.mixins import SuperuserRequiredMixin
 from routers.models import Router
 from routers.services import RouterProbeError
 
+from .lan_test import test_lan_access
 from .connectivity import fetch_router_hardware_info, test_router_vpn_connection
 from .hub_client import (
     VpsCommandFailed,
@@ -131,6 +134,25 @@ class GenerateLanAccessScriptView(LoginRequiredMixin, SuperuserRequiredMixin, Vi
             messages.error(request, str(exc))
             return redirect('router-detail', pk=router.pk)
         return render(request, 'vpn/lan_script.html', {'router': router, 'script': script})
+
+
+class TestLanAccessView(LoginRequiredMixin, SuperuserRequiredMixin, View):
+    """Test (dal VPS) della raggiungibilità della LAN dietro il router."""
+
+    def post(self, request, pk):
+        router = get_object_or_404(Router, pk=pk)
+        extra = request.POST.get('host', '').strip()
+        if extra:
+            try:
+                ip = ipaddress.ip_address(extra)
+                if ip not in ipaddress.ip_network(router.subnet_lan or '0.0.0.0/32'):
+                    raise ValueError
+            except ValueError:
+                return JsonResponse({'errore': f'"{extra}" non è un IP della subnet {router.subnet_lan}.'}, status=400)
+        try:
+            return JsonResponse(test_lan_access(router, extra))
+        except ValueError as exc:
+            return JsonResponse({'errore': str(exc)}, status=400)
 
 
 class ConfirmFirewallLockdownView(LoginRequiredMixin, SuperuserRequiredMixin, View):

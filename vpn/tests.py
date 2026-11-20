@@ -83,3 +83,50 @@ class ScriptTests(TestCase):
             conf = generate_personal_client_conf('priv', '10.10.0.2', personal_client_lan_subnets())
             self.assertIn('AllowedIPs = 10.10.0.0/24, 10.0.0.0/24\n', conf)
             self.assertIn('AllowedIPs = 10.10.0.0/24\n', generate_personal_client_conf('priv', '10.10.0.2'))
+
+
+class LanAccessTestTests(TestCase):
+    def _run(self, router, *, tunnel=True, lan=True, hosts=None, discovered=('10.0.0.20', '10.0.0.21'), extra=''):
+        from .lan_test import test_lan_access
+
+        def fake_ping(ip, count=2, timeout_s=2):
+            if ip == router.ip_vpn:
+                ok = tunnel
+            elif ip == router.ip_lan:
+                ok = lan
+            else:
+                ok = ip in (hosts or ())
+            return {'ok': ok, 'output': '', 'perdita_percento': 0.0 if ok else 100.0, 'rtt_medio_ms': 5.0 if ok else None}
+
+        with mock.patch('vpn.lan_test.ping', fake_ping), \
+                mock.patch('vpn.lan_test._discover_lan_hosts', return_value=(list(discovered), '')):
+            return test_lan_access(router, extra)
+
+    def _r(self):
+        r = _router('Ufficio', '10.0.0.0/24', ip_vpn='10.10.0.12')
+        r.ip_lan = '10.0.0.1'
+        return r
+
+    def test_ok(self):
+        res = self._run(self._r(), hosts=('10.0.0.21',))
+        self.assertTrue(res['ok'])
+        self.assertEqual([h['ok'] for h in res['hosts']], [False, True])
+
+    def test_tunnel_giu(self):
+        res = self._run(self._r(), tunnel=False)
+        self.assertFalse(res['ok'])
+        self.assertIn('tunnel non è attivo', res['verdetto'])
+
+    def test_router_ok_host_no(self):
+        res = self._run(self._r(), hosts=())
+        self.assertFalse(res['ok'])
+        self.assertIn('masquerade', res['verdetto'])
+
+    def test_nessun_host(self):
+        res = self._run(self._r(), discovered=())
+        self.assertIn('Inserisci', res['verdetto'])
+
+    def test_senza_subnet(self):
+        from .lan_test import test_lan_access
+        with self.assertRaises(ValueError):
+            test_lan_access(_router('X'))

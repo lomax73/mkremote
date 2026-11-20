@@ -99,12 +99,21 @@
     <a class="btn" href="{% url 'monitoring-router-detail' router.pk %}">Monitoraggio</a>
     {% if router.ip_vpn and router.subnet_lan %}
     <a class="btn" href="{% url 'vpn-generate-lan-script' router.pk %}">Accesso LAN</a>
+    <button class="btn" type="button" id="btn-test-lan">🖧 Test accesso LAN</button>
     {% endif %}
     {% if router.stato_connessione == 'connesso' %}
     <a class="btn btn-danger" href="{% url 'vpn-generate-firewall-script' router.pk %}">Blocca accesso pubblico</a>
     {% endif %}
     <a class="btn btn-danger" href="{% url 'router-delete' router.pk %}">Elimina</a>
 </p>
+
+{% if router.ip_vpn and router.subnet_lan %}
+<div id="lan-test-wrap" style="margin-bottom:1.5rem;">
+    <label for="lan-test-host" style="font-size:0.85rem;">IP di un PC acceso della LAN (facoltativo, altrimenti li cerco io):</label>
+    <input id="lan-test-host" type="text" placeholder="{{ router.subnet_lan }}" style="width:12rem;">
+    <div id="lan-test-box" hidden style="background:#0f172a; color:#d1d5db; padding:1rem; border-radius:8px; font-family:monospace; font-size:0.85rem; white-space:pre-wrap; margin-top:0.5rem;"></div>
+</div>
+{% endif %}
 
 <div id="diagnostica-box" hidden style="background:#0f172a; color:#d1d5db; padding:1rem; border-radius:8px; font-family:monospace; font-size:0.85rem; white-space:pre-wrap; margin-bottom:1.5rem;"></div>
 
@@ -161,6 +170,45 @@
                 btnCopiaIp.textContent = '✅';
                 setTimeout(function () { btnCopiaIp.textContent = originale; }, 1200);
             });
+        });
+    }
+
+    var btnLan = document.getElementById('btn-test-lan');
+    var boxLan = document.getElementById('lan-test-box');
+    if (btnLan) {
+        btnLan.addEventListener('click', function () {
+            btnLan.disabled = true;
+            btnLan.textContent = 'Test in corso...';
+            boxLan.hidden = false;
+            boxLan.textContent = 'Ping del tunnel, del router e dei PC della LAN, un momento...';
+            var body = new URLSearchParams({host: document.getElementById('lan-test-host').value});
+            fetch('{% url "vpn-test-lan" router.pk %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                body: body,
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.errore) { boxLan.textContent = 'Errore: ' + d.errore; return; }
+                    function riga(nome, p) {
+                        return nome + ': ' + (p.ok ? 'RISPONDE (' + (p.rtt_medio_ms !== null ? p.rtt_medio_ms + ' ms' : 'ok') + ')' : 'nessuna risposta');
+                    }
+                    var righe = ['Test accesso alla LAN ' + d.subnet, ''];
+                    righe.push(riga('1) Tunnel VPN (IP VPN router)', d.tunnel));
+                    if (d.router_lan) { righe.push(riga('2) Router sul suo IP LAN ' + d.router_lan.ip, d.router_lan)); }
+                    righe.push('3) PC della LAN:');
+                    if (d.discovery_error) { righe.push('   (ricerca automatica: ' + d.discovery_error + ')'); }
+                    if (!d.hosts.length) { righe.push('   nessun PC provato'); }
+                    d.hosts.forEach(function (h) { righe.push('   ' + riga(h.ip, h)); });
+                    righe.push('');
+                    righe.push((d.ok ? '✅ ' : '❌ ') + d.verdetto);
+                    boxLan.textContent = righe.join('\n');
+                })
+                .catch(function () { boxLan.textContent = 'Errore durante il test.'; })
+                .finally(function () {
+                    btnLan.disabled = false;
+                    btnLan.textContent = '🖧 Test accesso LAN';
+                });
         });
     }
 
