@@ -88,7 +88,7 @@
             {% for router in sezione.routers %}
             <li>
                 <div class="router-riga">
-                    <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>
+                    <a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>{% include "routers/_icona_lan.html" %}
                     {% if router.location %}<span class="location">{{ router.location }}</span>{% endif %}
                     <span class="mono">{{ router.ip_vpn|default:"—" }}</span>
                     {% if router.ip_vpn %}<button type="button" class="btn-copia" data-copia="{{ router.ip_vpn }}" title="Copia IP VPN" aria-label="Copia IP VPN">📋</button>{% endif %}
@@ -143,7 +143,7 @@
             <tbody>
                 {% for router in sezione.routers %}
                 <tr>
-                    <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a></td>
+                    <td><a href="{% url 'router-detail' router.pk %}">{{ router.nome }}</a>{% include "routers/_icona_lan.html" %}</td>
                     <td>{{ router.location }}</td>
                     <td class="mono">
                         {{ router.ip_vpn|default:"—" }}

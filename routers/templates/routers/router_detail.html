@@ -11,7 +11,7 @@
 {% endblock %}
 {% block content %}
 <p><a href="{% url 'router-list' %}">&larr; Router</a></p>
-<h1>{{ router.nome }}
+<h1>{{ router.nome }}{% include "routers/_icona_lan.html" %}
     <span class="badge badge-{{ router.stato_connessione }}">{{ router.get_stato_connessione_display }}</span>
 </h1>
 
